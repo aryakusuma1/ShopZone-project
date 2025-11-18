@@ -1,6 +1,6 @@
 # shopzone
 
-A new Flutter project.
+ShopZone e-commerce app.
 
 ## Getting Started
 
