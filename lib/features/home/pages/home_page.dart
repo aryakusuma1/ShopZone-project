@@ -120,10 +120,8 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(16.0),
             child: GestureDetector(
               onTap: () {
-                // TODO: Navigate to search page
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Search page - Coming soon!')),
-                );
+                // Navigate to the SearchPage (suggestions page)
+                Navigator.pushNamed(context, AppRoutes.search);
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
