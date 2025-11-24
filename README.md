@@ -3,9 +3,9 @@
 Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini memanfaatkan Firebase untuk layanan backend, termasuk autentikasi pengguna dan penyimpanan data melalui Cloud Firestore. ShopZone dirancang untuk menyediakan platform belanja online yang dinamis dan interaktif.
 ---
 
-## A - 202210370311261 - RAMA PRASTARUNA WIJAYA - ramaprastaruna
-## A - 202210370311261 - ARYA KUSUMA - aryakusuma1
-## A - 202210370311261 - DIMAS IMAM GHIFARI - DimasImamGhifari11
+## A - 202210370311277 - RAMA PRASTARUNA WIJAYA - ramaprastaruna
+## A - 202210370311280 - ARYA KUSUMA - aryakusuma1
+## A - 202210370311289 - DIMAS IMAM GHIFARI - DimasImamGhifari11
 
 ### Link Figma
 
