@@ -25,47 +25,38 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 ### Pembagian Tugas
 
-<h3>Pembagian Tugas</h3>
-
-<table style="width: 100%; border-collapse: collapse;">
-  <thead>
+<table border="1" cellspacing="0" cellpadding="6">
     <tr>
-      <th colspan="6" style="border: 1px solid #000; text-align: center; padding: 8px; background-color: #f2f2f2;">Shopzone</th>
+        <th colspan="5">Shopzone</th>
     </tr>
     <tr>
-      <th style="border: 1px solid #000; padding: 8px;"></th> <th style="border: 1px solid #000; padding: 8px;">Agile Organization</th>
-      <th style="border: 1px solid #000; padding: 8px;">Auth & User Profile</th>
-      <th style="border: 1px solid #000; padding: 8px;">Home</th>
-      <th style="border: 1px solid #000; padding: 8px;">Search Product <br> & Result Search</th>
-      <th style="border: 1px solid #000; padding: 8px;">Detail Product</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border: 1px solid #000; padding: 8px;"><strong>Product Owner</strong></td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
-      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
+        <th>Agile Organization</th>
+        <th>Auth &amp; User Profile</th>
+        <th>Home</th>
+        <th>Search Product &amp; Result Search</th>
+        <th>Detail Product</th>
     </tr>
     <tr>
-      <td style="border: 1px solid #000; padding: 8px;"><strong>Scrum Master</strong></td>
-      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+        <td>Product Owner</td>
+        <td>Arya Kusuma</td>
+        <td>Arya Kusuma</td>
+        <td>Dimas Imam Ghifari</td>
+        <td>Rama Prastaruna Wijaya</td>
     </tr>
     <tr>
-      <td style="border: 1px solid #000; padding: 8px;"><strong>Tim Pengembangan</strong></td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
-      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya<br>Arya Kusuma<br>Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
+        <td>Scrum Master</td>
+        <td>Dimas Imam Ghifari</td>
+        <td>Rama Prastaruna Wijaya</td>
+        <td>Arya Kusuma</td>
+        <td>Arya Kusuma</td>
     </tr>
-  </tbody>
+    <tr>
+        <td>Tim Pengembang</td>
+        <td>Arya Kusuma</td>
+        <td>Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari</td>
+        <td>Dimas Imam Ghifari</td>
+        <td>Rama Prastaruna Wijaya</td>
+    </tr>
 </table>
 
 <br>
