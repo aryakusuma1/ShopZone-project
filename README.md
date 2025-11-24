@@ -21,14 +21,16 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 ---
 
+
+
 ### Pembagian Tugas
 
-| | **Aplikasi Shopzone** | | | | |
+| | **Shopzone** | | | | |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| | **Agile Organization** | **Auth & User Profile** | **Home** | **Search Product & Result Search** | **Detail Product** |
-| **Product Owner** | Arya Kusuma | Arya Kusuma | Dimas Imam Ghifari | Rama Prastaruna Wijaya | **Dimas Imam Ghifari** |
-| **Scrum Master** | Arya Kusuma | Arya Kusuma | Arya Kusuma | Arya Kusuma | **Arya Kusuma** |
-| **Tim Pengembangan** | Arya Kusuma | Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya | **Dimas Imam Ghifari** |
+| | **Agile Organization** | **Auth & User Profile** | **Home** | **Search Product<br>& Result Search** | **Detail Product** |
+| **Product Owner** | Arya Kusuma | Arya Kusuma | Dimas Imam Ghifari | Rama Prastaruna Wijaya | Rama Prastaruna Wijaya |
+| **Scrum Master** | Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya | Arya Kusuma | Arya Kusuma |
+| **Tim Pengembangan** | Arya Kusuma | Arya Kusuma | Rama Prastaruna Wijaya,<br>Arya Kusuma,<br>Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya |
 
 <br>
 
