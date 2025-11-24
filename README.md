@@ -25,12 +25,48 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 ### Pembagian Tugas
 
-| | **Shopzone** | | | | |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| | **Agile Organization** | **Auth & User Profile** | **Home** | **Search Product<br>& Result Search** | **Detail Product** |
-| **Product Owner** | Arya Kusuma | Arya Kusuma | Dimas Imam Ghifari | Rama Prastaruna Wijaya | Rama Prastaruna Wijaya |
-| **Scrum Master** | Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya | Arya Kusuma | Arya Kusuma |
-| **Tim Pengembangan** | Arya Kusuma | Arya Kusuma | Rama Prastaruna Wijaya,<br>Arya Kusuma,<br>Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya |
+<table style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ccc;"></th>
+      <th colspan="5" style="border: 1px solid #ccc; text-align: center;">Shopzone</th>
+    </tr>
+    <tr>
+      <th style="border: 1px solid #ccc;"></th>
+      <th style="border: 1px solid #ccc;">Agile Organization</th>
+      <th style="border: 1px solid #ccc;">Auth & User Profile</th>
+      <th style="border: 1px solid #ccc;">Home</th>
+      <th style="border: 1px solid #ccc;">Search Product & Result Search</th>
+      <th style="border: 1px solid #ccc;">Detail Product</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #ccc;"><strong>Product Owner</strong></td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc;"><strong>Scrum Master</strong></td>
+      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc;"><strong>Tim Pengembangan</strong></td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya<br>Arya Kusuma<br>Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+    </tr>
+  </tbody>
+</table>
 
 <br>
 
