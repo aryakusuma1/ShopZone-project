@@ -4,6 +4,7 @@ import '../../../shared/widgets/product_card.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../data/dummy_products.dart';
+import '../../../routes/app_routes.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -75,6 +76,41 @@ class _HomePageState extends State<HomePage> {
               // TODO: Navigate to profile page
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Profile page - Coming soon!')),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: () {
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Apakah Anda yakin ingin keluar?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Batal'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Navigate to login and remove all previous routes
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.login,
+                            (route) => false,
+                          );
+                        },
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
