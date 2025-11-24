@@ -17,6 +17,11 @@ class DummyProducts {
         description: 'Sepatu dengan desain denim yang unik dan stylish untuk tampilan casual.',
         rating: 4.5,
         verified: true,
+        userPhotos: [
+          'assets/images/Hyperdenim.jpeg',
+          'assets/images/Hyperdenim.jpeg',
+          'assets/images/Hyperdenim.jpeg',
+        ],
       ),
       Product(
         id: '2',
@@ -30,6 +35,11 @@ class DummyProducts {
         description: 'Kolaborasi eksklusif Adidas x Oasis dengan desain limited edition.',
         rating: 4.8,
         verified: true,
+        userPhotos: [
+          'assets/images/Adidas x Oasis.png',
+          'assets/images/Adidas x Oasis.png',
+          'assets/images/Adidas x Oasis.png',
+        ],
       ),
       Product(
         id: '3',
@@ -43,6 +53,11 @@ class DummyProducts {
         description: 'Running shoes dengan teknologi Nike P-6000 untuk kenyamanan maksimal.',
         rating: 4.6,
         verified: true,
+        userPhotos: [
+          'assets/images/NIKE P 6000.png',
+          'assets/images/NIKE P 6000.png',
+          'assets/images/NIKE P 6000.png',
+        ],
       ),
       Product(
         id: '4',
@@ -56,6 +71,11 @@ class DummyProducts {
         description: 'Iconic Nike dengan logo swoosh besar yang bold dan striking.',
         rating: 4.7,
         verified: true,
+        userPhotos: [
+          'assets/images/NIKE Big Swoosh.png',
+          'assets/images/NIKE Big Swoosh.png',
+          'assets/images/NIKE Big Swoosh.png',
+        ],
       ),
       Product(
         id: '5',
@@ -69,6 +89,11 @@ class DummyProducts {
         description: 'Retro vibes dari era 2000-an dengan material suede premium.',
         rating: 4.9,
         verified: true,
+        userPhotos: [
+          "assets/images/Adidas Campus 00's.png",
+          "assets/images/Adidas Campus 00's.png",
+          "assets/images/Adidas Campus 00's.png",
+        ],
       ),
       Product(
         id: '6',
@@ -82,6 +107,11 @@ class DummyProducts {
         description: 'Kolaborasi limited edition Travis Scott x Jordan Brand yang sangat langka.',
         rating: 5.0,
         verified: true,
+        userPhotos: [
+          'assets/images/Air Jordan 1 Travis Scott.png',
+          'assets/images/Air Jordan 1 Travis Scott.png',
+          'assets/images/Air Jordan 1 Travis Scott.png',
+        ],
       ),
     ];
   }

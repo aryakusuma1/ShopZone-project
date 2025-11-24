@@ -410,12 +410,10 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                               return ProductCard(
                                 product: product,
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Product detail: ${product.name}',
-                                      ),
-                                    ),
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.productDetail,
+                                    arguments: product,
                                   );
                                 },
                               );

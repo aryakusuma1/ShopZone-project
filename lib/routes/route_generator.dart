@@ -5,6 +5,8 @@ import '../features/auth/pages/login_page.dart';
 import '../features/auth/pages/register_page.dart';
 import '../features/search/pages/search_page.dart';
 import '../features/search/pages/search_results_page.dart';
+import '../features/product/pages/product_detail_page.dart';
+import '../shared/models/product.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -25,6 +27,12 @@ class RouteGenerator {
         final args = settings.arguments as String?;
         return MaterialPageRoute(
           builder: (_) => SearchResultsPage(initialQuery: args),
+        );
+
+      case AppRoutes.productDetail:
+        final product = settings.arguments as Product;
+        return MaterialPageRoute(
+          builder: (_) => ProductDetailPage(product: product),
         );
 
       default:
