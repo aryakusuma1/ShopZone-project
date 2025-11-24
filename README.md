@@ -23,12 +23,12 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 ### Pembagian Tugas
 
-| | **Aplikasi Shopzone** | | |
-| :--- | :---: | :---: | :---: |
+| | **Aplikasi Shopzone** | | | | |
+| :--- | :---: | :---: | :---: | :---: | :---: |
 | | **Agile Organization** | **Auth & User Profile** | **Home** | **Search Product & Result Search** | **Detail Product** |
-| **Product Owner** | Arya Kusuma | Arya Kusuma | Dimas Imam Ghifari | Rama Prastaruna Wijaya |
-| **Scrum Master** | Arya Kusuma | Arya Kusuma | Arya Kusuma | Arya Kusuma |
-| **Tim Pengembangan** | Arya Kusuma | Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya |
+| **Product Owner** | Arya Kusuma | Arya Kusuma | Dimas Imam Ghifari | Rama Prastaruna Wijaya | **Dimas Imam Ghifari** |
+| **Scrum Master** | Arya Kusuma | Arya Kusuma | Arya Kusuma | Arya Kusuma | **Arya Kusuma** |
+| **Tim Pengembangan** | Arya Kusuma | Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari | Dimas Imam Ghifari | Rama Prastaruna Wijaya | **Dimas Imam Ghifari** |
 
 <br>
 
