@@ -223,11 +223,10 @@ class _HomePageState extends State<HomePage> {
                   return ProductCard(
                     product: product,
                     onTap: () {
-                      // TODO: Navigate to product detail page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Product detail: ${product.name}'),
-                        ),
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.productDetail,
+                        arguments: product,
                       );
                     },
                   );
