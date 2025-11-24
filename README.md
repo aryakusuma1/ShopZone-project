@@ -1,6 +1,6 @@
 # shopzone
 
-ShopZone e-commerce app.
+ShopZone E-commerce App.
 
 ## Getting Started
 
