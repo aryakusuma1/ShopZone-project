@@ -1,5 +1,10 @@
 flutter/ephemeral/
 
+# Generated plugin files
+flutter/generated_plugin*.cc
+flutter/generated_plugin*.h
+flutter/generated_plugins.cmake
+
 # Visual Studio user-specific files.
 *.suo
 *.user
