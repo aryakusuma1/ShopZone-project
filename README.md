@@ -25,45 +25,45 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 ### Pembagian Tugas
 
+<h3>Pembagian Tugas</h3>
+
 <table style="width: 100%; border-collapse: collapse;">
   <thead>
     <tr>
-      <th style="border: 1px solid #ccc;"></th>
-      <th colspan="5" style="border: 1px solid #ccc; text-align: center;">Shopzone</th>
+      <th colspan="6" style="border: 1px solid #000; text-align: center; padding: 8px; background-color: #f2f2f2;">Shopzone</th>
     </tr>
     <tr>
-      <th style="border: 1px solid #ccc;"></th>
-      <th style="border: 1px solid #ccc;">Agile Organization</th>
-      <th style="border: 1px solid #ccc;">Auth & User Profile</th>
-      <th style="border: 1px solid #ccc;">Home</th>
-      <th style="border: 1px solid #ccc;">Search Product & Result Search</th>
-      <th style="border: 1px solid #ccc;">Detail Product</th>
+      <th style="border: 1px solid #000; padding: 8px;"></th> <th style="border: 1px solid #000; padding: 8px;">Agile Organization</th>
+      <th style="border: 1px solid #000; padding: 8px;">Auth & User Profile</th>
+      <th style="border: 1px solid #000; padding: 8px;">Home</th>
+      <th style="border: 1px solid #000; padding: 8px;">Search Product <br> & Result Search</th>
+      <th style="border: 1px solid #000; padding: 8px;">Detail Product</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="border: 1px solid #ccc;"><strong>Product Owner</strong></td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
-      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
-      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #000; padding: 8px;"><strong>Product Owner</strong></td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
     </tr>
     <tr>
-      <td style="border: 1px solid #ccc;"><strong>Scrum Master</strong></td>
-      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;"><strong>Scrum Master</strong></td>
+      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
     </tr>
     <tr>
-      <td style="border: 1px solid #ccc;"><strong>Tim Pengembangan</strong></td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
-      <td style="border: 1px solid #ccc;">Arya Kusuma</td>
-      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya<br>Arya Kusuma<br>Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #ccc;">Dimas Imam Ghifari</td>
-      <td style="border: 1px solid #ccc;">Rama Prastaruna Wijaya</td>
+      <td style="border: 1px solid #000; padding: 8px;"><strong>Tim Pengembangan</strong></td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;">Arya Kusuma</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya<br>Arya Kusuma<br>Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #000; padding: 8px;">Dimas Imam Ghifari</td>
+      <td style="border: 1px solid #000; padding: 8px;">Rama Prastaruna Wijaya</td>
     </tr>
   </tbody>
 </table>
