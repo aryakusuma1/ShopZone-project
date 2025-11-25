@@ -8,4 +8,5 @@ class AppRoutes {
   static const String search = '/search';
   static const String searchResults = '/searchResults';
   static const String productDetail = '/productDetail';
+  static const String cart = '/cart';
 }

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../shared/models/product.dart';
+import '../../../shared/providers/cart_provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 
@@ -230,12 +233,91 @@ class ProductDetailPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${product.name} ditambahkan ke keranjang'),
-                        duration: const Duration(seconds: 2),
+                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    cart.addItem(product);
+
+                    // Clear any existing snackbars first
+                    ScaffoldMessenger.of(context).clearSnackBars();
+
+                    // Show snackbar with auto-dismiss after 2 seconds
+                    final snackBar = SnackBar(
+                      content: GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          Navigator.pushNamed(context, '/cart');
+                        },
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Berhasil ditambahkan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    product.name,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Lihat',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ],
+                        ),
                       ),
+                      backgroundColor: const Color(0xFF2E7D32),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: const EdgeInsets.all(16),
+                      duration: const Duration(seconds: 2),
                     );
+
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+
+                    // Force hide snackbar after 2 seconds as a safety measure
+                    Timer(const Duration(seconds: 2), () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2196F3),

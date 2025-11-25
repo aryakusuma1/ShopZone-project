@@ -6,6 +6,7 @@ import '../features/auth/pages/register_page.dart';
 import '../features/search/pages/search_page.dart';
 import '../features/search/pages/search_results_page.dart';
 import '../features/product/pages/product_detail_page.dart';
+import '../features/cart/pages/cart_page.dart';
 import '../shared/models/product.dart';
 
 class RouteGenerator {
@@ -34,6 +35,9 @@ class RouteGenerator {
         return MaterialPageRoute(
           builder: (_) => ProductDetailPage(product: product),
         );
+
+      case AppRoutes.cart:
+        return MaterialPageRoute(builder: (_) => const CartPage());
 
       default:
         return MaterialPageRoute(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
+import 'shared/providers/cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,16 +19,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ShopZone',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+    return ChangeNotifierProvider(
+      create: (context) => CartProvider(),
+      child: MaterialApp(
+        title: 'ShopZone',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+        ),
+        initialRoute: AppRoutes.home,
+        onGenerateRoute: RouteGenerator.generateRoute,
       ),
-      initialRoute: AppRoutes.home,
-      onGenerateRoute: RouteGenerator.generateRoute,
     );
   }
 }
