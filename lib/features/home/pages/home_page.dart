@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/widgets/product_card.dart';
+import '../../../shared/providers/cart_provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../data/dummy_products.dart';
@@ -58,12 +60,42 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         title: const Text('ShopZone', style: AppTextStyles.heading2),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black),
-            onPressed: () {
-              // TODO: Navigate to cart page
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cart page - Coming soon!')),
+          Consumer<CartProvider>(
+            builder: (context, cart, child) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black),
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRoutes.cart);
+                    },
+                  ),
+                  if (cart.uniqueItemCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${cart.uniqueItemCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),
@@ -256,10 +288,15 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
         onTap: (index) {
-          // TODO: Handle bottom nav tap
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Tab $index clicked - Coming soon!')),
-          );
+          if (index == 2) {
+            // Navigate to cart page
+            Navigator.pushNamed(context, AppRoutes.cart);
+          } else {
+            // TODO: Handle other bottom nav taps
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Tab $index clicked - Coming soon!')),
+            );
+          }
         },
       ),
     );
