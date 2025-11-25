@@ -149,8 +149,9 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     String? selectedValue,
     ValueChanged<String> onSelected,
     OverlayEntry? currentOverlay,
-    Function(OverlayEntry?) updateOverlay,
-  ) {
+    Function(OverlayEntry?) updateOverlay, {
+    double dropdownWidth = 140.0,
+  }) {
     if (currentOverlay != null) {
       _hideDropdownOverlay(currentOverlay);
       updateOverlay(null);
@@ -183,7 +184,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
 
     final double topPosition = chipOffset.dy + chipSize.height + 4; // 4px padding
     double leftPosition = chipOffset.dx;
-    const double dropdownWidth = 180.0; // A reasonable fixed width
 
     // Adjust left position to prevent overflow from the right edge
     if (leftPosition + dropdownWidth > screenWidth) {
@@ -258,18 +258,15 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      // Wrap text with Expanded to prevent overflow
-                      child: Text(
-                        option,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          fontWeight: selectedValue == option
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          color: selectedValue == option
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
-                        ),
+                    Text(
+                      option,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: selectedValue == option
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                        color: selectedValue == option
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                       ),
                     ),
                     if (option == '5' ||
@@ -559,6 +556,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                             },
                             _ratingDropdownOverlay,
                             (overlay) => _ratingDropdownOverlay = overlay,
+                            dropdownWidth: 100.0,
                           );
                         },
                         child: Container(
