@@ -64,49 +64,60 @@ class _SearchPageState extends State<SearchPage> {
           },
         ),
         titleSpacing: 0,
-        title: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: TextFormField(
-            controller: _searchController,
-            autofocus: true,
-            onChanged: _onSearchChanged,
-            onFieldSubmitted: (query) {
-              if (query.isNotEmpty) {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.searchResults,
-                  arguments: query,
-                );
-              }
-            },
-            decoration: InputDecoration(
-              hintText: 'Cari di Belanja',
-              hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textHint,
+        title: Expanded(
+          // Wrap the Container with Expanded to give it maximum width
+          child: Container(
+            height: 40,
+            margin: const EdgeInsets.only(
+              right: 16,
+            ), // Add margin consistent with search_results_page
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: TextFormField(
+              controller: _searchController,
+              autofocus: true,
+              textAlignVertical:
+                  TextAlignVertical.center, // Added for vertical alignment
+              onChanged: _onSearchChanged,
+              onFieldSubmitted: (query) {
+                if (query.isNotEmpty) {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.searchResults,
+                    arguments: query,
+                  );
+                }
+              },
+              decoration: InputDecoration(
+                hintText: 'Cari di Belanja',
+                hintStyle: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textHint,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textSecondary,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 8, // Adjusted to 8 for more horizontal space
+                  vertical: 0,
+                ), // Adjusted padding
               ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: AppColors.textSecondary,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: AppColors.textSecondary,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
             ),
           ),
         ),
