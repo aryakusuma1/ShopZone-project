@@ -18,7 +18,8 @@ class CartProvider extends ChangeNotifier {
   int get uniqueItemCount => _items.length;
 
   // Getter untuk total harga
-  int get totalPrice => _items.fold(0, (total, item) => total + item.totalPrice);
+  int get totalPrice =>
+      _items.fold(0, (total, item) => total + item.totalPrice);
 
   // Getter untuk selected discount
   String get selectedDiscount => _selectedDiscount;
@@ -71,31 +72,24 @@ class CartProvider extends ChangeNotifier {
 
   // Format harga ke Rupiah
   String get formattedTotalPrice {
-    return 'Rp${totalPrice.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        )}';
+    return 'Rp${totalPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   String get formattedFinalPrice {
-    return 'Rp${finalPrice.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        )}';
+    return 'Rp${finalPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   String get formattedDiscountAmount {
     if (_discountAmount == 0) return '-';
-    return 'Rp${_discountAmount.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        )}';
+    return 'Rp${_discountAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   // Tambah item ke keranjang
   void addItem(Product product) {
     // Cek apakah produk sudah ada di keranjang
-    final existingIndex = _items.indexWhere((item) => item.product.id == product.id);
+    final existingIndex = _items.indexWhere(
+      (item) => item.product.id == product.id,
+    );
 
     if (existingIndex >= 0) {
       // Jika sudah ada, tambah quantity
@@ -223,7 +217,8 @@ class CartProvider extends ChangeNotifier {
         // Downgrade ke DISC_5M
         _selectedDiscount = 'DISC_5M';
         _discountAmount = (totalPrice * 0.10).round();
-      } else if (totalPrice >= 2000000 && (_selectedDiscount == 'DISC_5M' || _selectedDiscount == 'DISC_10M')) {
+      } else if (totalPrice >= 2000000 &&
+          (_selectedDiscount == 'DISC_5M' || _selectedDiscount == 'DISC_10M')) {
         // Downgrade ke DISC_2M
         _selectedDiscount = 'DISC_2M';
         _discountAmount = (totalPrice * 0.05).round();
@@ -250,13 +245,17 @@ class CartProvider extends ChangeNotifier {
   int getQuantity(String productId) {
     final item = _items.firstWhere(
       (item) => item.product.id == productId,
-      orElse: () => CartItem(product: Product(
-        id: '',
-        name: '',
-        price: 0,
-        imageUrl: '',
-        category: '',
-      ), quantity: 0),
+      orElse: () => CartItem(
+        product: Product(
+          id: '',
+          name: '',
+          price: 0,
+          imageUrl: '',
+          category: '',
+          condition: 'baru', // Provide a default condition
+        ),
+        quantity: 0,
+      ),
     );
     return item.quantity;
   }

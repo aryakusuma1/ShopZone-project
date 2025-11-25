@@ -5,6 +5,7 @@ class Product {
   final int price;
   final String imageUrl;
   final String category;
+  final String condition; // Add new condition field
   final String? size;
   final String? color;
   final String? material;
@@ -19,6 +20,7 @@ class Product {
     required this.price,
     required this.imageUrl,
     required this.category,
+    required this.condition, // Make condition required
     this.size,
     this.color,
     this.material,
@@ -30,10 +32,7 @@ class Product {
 
   // Format harga ke Rupiah
   String get formattedPrice {
-    return 'Rp${price.toString().replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        )}';
+    return 'Rp${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
   }
 
   // Convert dari JSON (untuk Firebase/API nanti)
@@ -44,6 +43,7 @@ class Product {
       price: json['price'] ?? 0,
       imageUrl: json['imageUrl'] ?? '',
       category: json['category'] ?? '',
+      condition: json['condition'] ?? 'baru', // Default to 'baru'
       size: json['size'],
       color: json['color'],
       material: json['material'],
@@ -64,6 +64,7 @@ class Product {
       'price': price,
       'imageUrl': imageUrl,
       'category': category,
+      'condition': condition, // Add condition to toJson
       'size': size,
       'color': color,
       'material': material,
