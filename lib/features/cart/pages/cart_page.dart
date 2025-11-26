@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/providers/cart_provider.dart';
+import '../../../shared/providers/order_provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../routes/app_routes.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -993,42 +995,36 @@ class _CartPageState extends State<CartPage> {
                                     Expanded(
                                       child: ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context).clearSnackBars();
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.all(6),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white.withValues(alpha: 0.2),
-                                                      borderRadius: BorderRadius.circular(6),
-                                                    ),
-                                                    child: const Icon(
-                                                      Icons.info_outline,
-                                                      color: Colors.white,
-                                                      size: 18,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  const Expanded(
-                                                    child: Text(
-                                                      'Fitur pembayaran segera hadir!',
-                                                      style: TextStyle(fontSize: 14),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              backgroundColor: AppColors.secondary,
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              margin: const EdgeInsets.all(16),
-                                              duration: const Duration(milliseconds: 2000),
-                                            ),
+                                          // Get providers
+                                          final cart = Provider.of<CartProvider>(context, listen: false);
+                                          final orderProvider = Provider.of<OrderProvider>(context, listen: false);
+
+                                          // Create order
+                                          final orderId = orderProvider.createOrder(
+                                            items: cart.items,
+                                            totalPrice: cart.totalPrice,
+                                            discountAmount: cart.discountAmount,
+                                            finalPrice: cart.finalPrice,
+                                            shippingAddress: cart.shippingAddress,
                                           );
+
+                                          // Get the created order
+                                          final order = orderProvider.getOrderById(orderId);
+
+                                          // Clear cart
+                                          cart.clearCart();
+
+                                          // Close dialog
+                                          Navigator.pop(context);
+
+                                          // Navigate to order detail
+                                          if (order != null) {
+                                            Navigator.pushReplacementNamed(
+                                              context,
+                                              AppRoutes.orderDetail,
+                                              arguments: order,
+                                            );
+                                          }
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppColors.secondary,
@@ -1082,21 +1078,37 @@ class _CartPageState extends State<CartPage> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
+        backgroundColor: Colors.white,
+        elevation: 8,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            label: 'Katalog',
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
+            icon: Icon(Icons.receipt_long_outlined),
+            activeIcon: Icon(Icons.receipt_long),
+            label: 'Pesanan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            activeIcon: Icon(Icons.shopping_cart),
             label: 'Keranjang',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profil',
+          ),
         ],
         onTap: (index) {
           if (index == 0) {
             Navigator.pop(context);
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, AppRoutes.orders);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Tab $index clicked - Coming soon!')),

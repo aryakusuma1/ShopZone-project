@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'shared/providers/cart_provider.dart';
+import 'shared/providers/order_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,8 +20,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => CartProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => OrderProvider()),
+      ],
       child: MaterialApp(
         title: 'ShopZone',
         debugShowCheckedModeBanner: false,

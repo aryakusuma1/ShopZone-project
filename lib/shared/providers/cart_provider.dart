@@ -1,12 +1,40 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/cart_item.dart';
 import '../models/product.dart';
 
 class CartProvider extends ChangeNotifier {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final List<CartItem> _items = [];
   String _selectedDiscount = '';
   int _discountAmount = 0;
   String _shippingAddress = 'Jl. Tirto Utomo';
+  String? _currentUserId;
+
+  CartProvider() {
+    // Check if user is already logged in
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      _currentUserId = currentUser.uid;
+      _loadCartFromFirestore();
+    }
+
+    // Listen to auth state changes
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null && user.uid != _currentUserId) {
+        // User logged in or switched, load their cart
+        _currentUserId = user.uid;
+        _loadCartFromFirestore();
+      } else if (user == null) {
+        // User logged out, clear cart
+        _currentUserId = null;
+        _clearLocalCart();
+      }
+    });
+  }
 
   // Getter untuk mendapatkan semua item di keranjang
   List<CartItem> get items => _items;
@@ -103,6 +131,7 @@ class CartProvider extends ChangeNotifier {
     _recalculateDiscount();
 
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Update quantity item
@@ -120,6 +149,7 @@ class CartProvider extends ChangeNotifier {
       _recalculateDiscount();
 
       notifyListeners();
+      _saveCartToFirestore();
     }
   }
 
@@ -133,6 +163,7 @@ class CartProvider extends ChangeNotifier {
       _recalculateDiscount();
 
       notifyListeners();
+      _saveCartToFirestore();
     }
   }
 
@@ -147,6 +178,7 @@ class CartProvider extends ChangeNotifier {
         _recalculateDiscount();
 
         notifyListeners();
+        _saveCartToFirestore();
       } else {
         removeItem(productId);
       }
@@ -161,6 +193,7 @@ class CartProvider extends ChangeNotifier {
     _recalculateDiscount();
 
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Clear semua item
@@ -169,6 +202,7 @@ class CartProvider extends ChangeNotifier {
     _selectedDiscount = '';
     _discountAmount = 0;
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Apply discount by ID
@@ -176,6 +210,7 @@ class CartProvider extends ChangeNotifier {
     _selectedDiscount = discountId;
     _discountAmount = amount;
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Remove discount
@@ -183,6 +218,7 @@ class CartProvider extends ChangeNotifier {
     _selectedDiscount = '';
     _discountAmount = 0;
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Recalculate discount when cart changes
@@ -234,6 +270,7 @@ class CartProvider extends ChangeNotifier {
   void updateAddress(String address) {
     _shippingAddress = address;
     notifyListeners();
+    _saveCartToFirestore();
   }
 
   // Cek apakah produk sudah ada di keranjang
@@ -258,5 +295,68 @@ class CartProvider extends ChangeNotifier {
       ),
     );
     return item.quantity;
+  }
+
+  // Load cart from Firestore for current user
+  Future<void> _loadCartFromFirestore() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final doc = await _firestore
+          .collection('carts')
+          .doc(_currentUserId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null) {
+          _items.clear();
+
+          // Load items
+          if (data['items'] != null) {
+            final List<dynamic> itemsData = data['items'];
+            for (var itemData in itemsData) {
+              _items.add(CartItem.fromJson(itemData));
+            }
+          }
+
+          // Load other cart properties
+          _selectedDiscount = data['selectedDiscount'] ?? '';
+          _discountAmount = data['discountAmount'] ?? 0;
+          _shippingAddress = data['shippingAddress'] ?? 'Jl. Tirto Utomo';
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cart from Firestore: $e');
+    }
+  }
+
+  // Save cart to Firestore for current user
+  Future<void> _saveCartToFirestore() async {
+    if (_currentUserId == null) return;
+
+    try {
+      await _firestore.collection('carts').doc(_currentUserId).set({
+        'userId': _currentUserId,
+        'items': _items.map((item) => item.toJson()).toList(),
+        'selectedDiscount': _selectedDiscount,
+        'discountAmount': _discountAmount,
+        'shippingAddress': _shippingAddress,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Error saving cart to Firestore: $e');
+    }
+  }
+
+  // Clear local cart (when user logs out)
+  void _clearLocalCart() {
+    _items.clear();
+    _selectedDiscount = '';
+    _discountAmount = 0;
+    _shippingAddress = 'Jl. Tirto Utomo';
+    notifyListeners();
   }
 }
