@@ -71,15 +71,14 @@ class _SearchPageState extends State<SearchPage> {
               right: 16,
             ), // Add margin consistent with search_results_page
             decoration: BoxDecoration(
-              color: AppColors.cardBackground,
+              color: AppColors.background, // Changed from cardBackground to background for pure white
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.border),
             ),
             child: TextFormField(
               controller: _searchController,
               autofocus: true,
-              textAlignVertical:
-                  TextAlignVertical.center, // Added for vertical alignment
+              textAlign: TextAlign.start, // Explicitly align text to start
               onChanged: _onSearchChanged,
               onFieldSubmitted: (query) {
                 if (query.isNotEmpty) {
@@ -91,6 +90,7 @@ class _SearchPageState extends State<SearchPage> {
                 }
               },
               decoration: InputDecoration(
+                isDense: true, // Reduces the overall height of the InputDecoration
                 hintText: 'Cari di Belanja',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textHint,
@@ -112,10 +112,8 @@ class _SearchPageState extends State<SearchPage> {
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8, // Adjusted to 8 for more horizontal space
-                  vertical: 0,
-                ), // Adjusted padding
+                // Adjusted contentPadding for better vertical centering with isDense
+                contentPadding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
               ),
             ),
           ),
