@@ -7,7 +7,10 @@ import '../features/search/pages/search_page.dart';
 import '../features/search/pages/search_results_page.dart';
 import '../features/product/pages/product_detail_page.dart';
 import '../features/cart/pages/cart_page.dart';
+import '../features/order/pages/orders_page.dart';
+import '../features/order/pages/order_detail_page.dart';
 import '../shared/models/product.dart';
+import '../shared/models/order.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -38,6 +41,15 @@ class RouteGenerator {
 
       case AppRoutes.cart:
         return MaterialPageRoute(builder: (_) => const CartPage());
+
+      case AppRoutes.orders:
+        return MaterialPageRoute(builder: (_) => const OrdersPage());
+
+      case AppRoutes.orderDetail:
+        final order = settings.arguments as Order;
+        return MaterialPageRoute(
+          builder: (_) => OrderDetailPage(order: order),
+        );
 
       default:
         return MaterialPageRoute(

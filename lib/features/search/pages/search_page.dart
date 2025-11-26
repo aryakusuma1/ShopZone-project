@@ -3,7 +3,6 @@ import 'package:shopzone/core/constants/colors.dart';
 import 'package:shopzone/core/constants/text_styles.dart';
 import 'package:shopzone/routes/app_routes.dart';
 import 'package:shopzone/features/home/data/dummy_products.dart'; // Import dummy products
-import 'package:shopzone/shared/models/product.dart'; // Import Product model
 
 class SearchPage extends StatefulWidget {
   final String? initialQuery;
