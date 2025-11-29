@@ -161,13 +161,13 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildMenuItem(
                 icon: Icons.person_outline,
                 title: 'Akun',
-                onTap: () {
-                  // TODO: Navigate to Account page
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Halaman Akun dalam pengembangan'),
-                    ),
-                  );
+                onTap: () async {
+                  // Navigate ke Account page dan tunggu sampai kembali
+                  await Navigator.pushNamed(context, AppRoutes.account);
+                  // Setelah kembali, refresh halaman Profile
+                  setState(() {
+                    // Rebuild widget untuk update nama
+                  });
                 },
               ),
               const SizedBox(height: 12),
