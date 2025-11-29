@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/widgets/product_card.dart';
-import '../../../shared/providers/cart_provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../data/dummy_products.dart';
@@ -59,91 +57,6 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text('ShopZone', style: AppTextStyles.heading2),
-        actions: [
-          Consumer<CartProvider>(
-            builder: (context, cart, child) {
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black),
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.cart);
-                    },
-                  ),
-                  if (cart.uniqueItemCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '${cart.uniqueItemCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black),
-            onPressed: () {
-              // TODO: Navigate to profile page
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile page - Coming soon!')),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: () {
-              // Show confirmation dialog
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Apakah Anda yakin ingin keluar?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Batal'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          // Navigate to login and remove all previous routes
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            AppRoutes.login,
-                            (route) => false,
-                          );
-                        },
-                        child: const Text('Logout'),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -308,11 +221,9 @@ class _HomePageState extends State<HomePage> {
           } else if (index == 2) {
             // Navigate to cart page
             Navigator.pushNamed(context, AppRoutes.cart);
-          } else {
-            // TODO: Handle other bottom nav taps
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Tab $index clicked - Coming soon!')),
-            );
+          } else if (index == 3) {
+            // Navigate to profile page
+            Navigator.pushNamed(context, AppRoutes.profile);
           }
         },
       ),
