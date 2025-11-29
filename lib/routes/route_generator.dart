@@ -9,6 +9,7 @@ import '../features/product/pages/product_detail_page.dart';
 import '../features/cart/pages/cart_page.dart';
 import '../features/order/pages/orders_page.dart';
 import '../features/order/pages/order_detail_page.dart';
+import '../features/profile/pages/profile_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
 
@@ -50,6 +51,9 @@ class RouteGenerator {
         return MaterialPageRoute(
           builder: (_) => OrderDetailPage(order: order),
         );
+
+      case AppRoutes.profile:
+        return MaterialPageRoute(builder: (_) => const ProfilePage());
 
       default:
         return MaterialPageRoute(
