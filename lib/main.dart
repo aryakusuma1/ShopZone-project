@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           fontFamily: 'Roboto',
         ),
-        initialRoute: AppRoutes.home,
+        initialRoute: AppRoutes.splash,
         onGenerateRoute: RouteGenerator.generateRoute,
       ),
     );
