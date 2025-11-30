@@ -14,6 +14,8 @@ import '../features/profile/pages/profile_page.dart';
 import '../features/profile/pages/account_page.dart';
 import '../features/address/pages/select_address_page.dart';
 import '../features/address/pages/add_edit_address_page.dart';
+import '../features/profile/pages/about_page.dart';
+import '../features/profile/pages/help_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
 
@@ -78,6 +80,12 @@ class RouteGenerator {
             existingAddress: existingAddress,
           ),
         );
+
+      case AppRoutes.help:
+        return MaterialPageRoute(builder: (_) => const HelpPage());
+
+      case AppRoutes.about:
+        return MaterialPageRoute(builder: (_) => const AboutPage());
 
       default:
         return MaterialPageRoute(

@@ -177,12 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: Icons.help_outline,
                 title: 'Bantuan',
                 onTap: () {
-                  // TODO: Navigate to Help page
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Halaman Bantuan dalam pengembangan'),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.help);
                 },
               ),
               const SizedBox(height: 12),
@@ -192,12 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: Icons.info_outline,
                 title: 'Tentang',
                 onTap: () {
-                  // TODO: Navigate to About page
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Halaman Tentang dalam pengembangan'),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.about);
                 },
               ),
               const SizedBox(height: 32),
