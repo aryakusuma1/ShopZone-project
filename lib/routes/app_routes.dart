@@ -18,4 +18,6 @@ class AppRoutes {
   static const String account = '/account';
   static const String selectAddress = '/selectAddress';
   static const String addEditAddress = '/addEditAddress';
+  static const String help = '/help';
+  static const String about = '/about';
 }
