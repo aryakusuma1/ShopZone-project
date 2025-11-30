@@ -12,6 +12,8 @@ import '../features/order/pages/orders_page.dart';
 import '../features/order/pages/order_detail_page.dart';
 import '../features/profile/pages/profile_page.dart';
 import '../features/profile/pages/account_page.dart';
+import '../features/address/pages/select_address_page.dart';
+import '../features/address/pages/add_edit_address_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
 
@@ -62,6 +64,20 @@ class RouteGenerator {
 
       case AppRoutes.account:
         return MaterialPageRoute(builder: (_) => const AccountPage());
+
+      case AppRoutes.selectAddress:
+        return MaterialPageRoute(builder: (_) => const SelectAddressPage());
+
+      case AppRoutes.addEditAddress:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final isMainAddress = args?['isMainAddress'] as bool? ?? false;
+        final existingAddress = args?['existingAddress'];
+        return MaterialPageRoute(
+          builder: (_) => AddEditAddressPage(
+            isMainAddress: isMainAddress,
+            existingAddress: existingAddress,
+          ),
+        );
 
       default:
         return MaterialPageRoute(

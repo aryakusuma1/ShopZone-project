@@ -19,9 +19,11 @@ class _CartPageState extends State<CartPage> {
   @override
   void initState() {
     super.initState();
-    // Set initial address value
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Reload user address and set initial address value
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final cart = Provider.of<CartProvider>(context, listen: false);
+      // Reload address from user profile to get latest data
+      await cart.reloadUserAddress();
       _addressController.text = cart.shippingAddress;
     });
   }
@@ -32,179 +34,15 @@ class _CartPageState extends State<CartPage> {
     super.dispose();
   }
 
-  void _showAddressDialog(BuildContext context, CartProvider cart) {
-    final tempController = TextEditingController(text: cart.shippingAddress);
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.location_on,
-                      color: AppColors.secondary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Alamat Pengiriman',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 20),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Text field
-              TextField(
-                controller: tempController,
-                decoration: InputDecoration(
-                  hintText: 'Masukkan alamat lengkap',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  contentPadding: const EdgeInsets.all(16),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
-                ),
-                maxLines: 3,
-                autofocus: true,
-              ),
-              const SizedBox(height: 20),
-
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.grey[100],
-                        foregroundColor: Colors.grey[700],
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      child: const Text(
-                        'Batal',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (tempController.text.trim().isNotEmpty) {
-                          cart.updateAddress(tempController.text.trim());
-                          _addressController.text = tempController.text.trim();
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Alamat berhasil diperbarui',
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              backgroundColor: Colors.green[600],
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              margin: const EdgeInsets.all(16),
-                              duration: const Duration(milliseconds: 2000),
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.secondary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Simpan',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _navigateToSelectAddress(BuildContext context) async {
+    final result = await Navigator.pushNamed(context, AppRoutes.selectAddress);
+    if (result != null && result is String) {
+      final cart = Provider.of<CartProvider>(context, listen: false);
+      cart.updateAddress(result);
+      setState(() {
+        _addressController.text = result;
+      });
+    }
   }
 
   void _showDiscountDialog(BuildContext context, CartProvider cart) {
@@ -771,7 +609,7 @@ class _CartPageState extends State<CartPage> {
 
                       // Alamat
                       InkWell(
-                        onTap: () => _showAddressDialog(context, cart),
+                        onTap: () => _navigateToSelectAddress(context),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -814,10 +652,17 @@ class _CartPageState extends State<CartPage> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      cart.shippingAddress,
+                                      cart.shippingAddress.isEmpty
+                                          ? 'Pilih alamat pengiriman'
+                                          : cart.shippingAddress,
                                       style: TextStyle(
-                                        color: Colors.grey[600],
+                                        color: cart.shippingAddress.isEmpty
+                                            ? AppColors.error
+                                            : Colors.grey[600],
                                         fontSize: 12,
+                                        fontStyle: cart.shippingAddress.isEmpty
+                                            ? FontStyle.italic
+                                            : FontStyle.normal,
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -858,6 +703,34 @@ class _CartPageState extends State<CartPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      // Validate if address is selected
+                      if (cart.shippingAddress.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.white, size: 20),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Pilih alamat pengiriman terlebih dahulu',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: AppColors.error,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            margin: const EdgeInsets.all(16),
+                            duration: const Duration(milliseconds: 2000),
+                          ),
+                        );
+                        return;
+                      }
+
                       showDialog(
                         context: context,
                         builder: (context) => Dialog(
@@ -1109,10 +982,8 @@ class _CartPageState extends State<CartPage> {
             Navigator.pop(context);
           } else if (index == 1) {
             Navigator.pushReplacementNamed(context, AppRoutes.orders);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Tab $index clicked - Coming soon!')),
-            );
+          } else if (index == 3) {
+            Navigator.pushReplacementNamed(context, AppRoutes.account);
           }
         },
       ),

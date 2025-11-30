@@ -11,7 +11,7 @@ class CartProvider extends ChangeNotifier {
   final List<CartItem> _items = [];
   String _selectedDiscount = '';
   int _discountAmount = 0;
-  String _shippingAddress = 'Jl. Tirto Utomo';
+  String _shippingAddress = '';
   String? _currentUserId;
 
   CartProvider() {
@@ -19,6 +19,7 @@ class CartProvider extends ChangeNotifier {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
       _currentUserId = currentUser.uid;
+      _loadUserAddress();
       _loadCartFromFirestore();
     }
 
@@ -27,6 +28,7 @@ class CartProvider extends ChangeNotifier {
       if (user != null && user.uid != _currentUserId) {
         // User logged in or switched, load their cart
         _currentUserId = user.uid;
+        _loadUserAddress();
         _loadCartFromFirestore();
       } else if (user == null) {
         // User logged out, clear cart
@@ -273,6 +275,91 @@ class CartProvider extends ChangeNotifier {
     _saveCartToFirestore();
   }
 
+  // Reload user address from profile (can be called after profile update)
+  Future<void> reloadUserAddress() async {
+    await _loadUserAddress();
+  }
+
+  // Get user's profile address without changing current shipping address
+  Future<String> getUserProfileAddress() async {
+    if (_currentUserId == null) return '';
+
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData['address'] != null) {
+          final userAddress = userData['address'].toString();
+          if (userAddress.isNotEmpty) {
+            return userAddress;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting user profile address: $e');
+    }
+
+    return '';
+  }
+
+  // Get user's profile phone number
+  Future<String> getUserProfilePhone() async {
+    if (_currentUserId == null) return '';
+
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData['phone'] != null) {
+          final userPhone = userData['phone'].toString();
+          if (userPhone.isNotEmpty) {
+            return userPhone;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting user profile phone: $e');
+    }
+
+    return '';
+  }
+
+  // Get user's profile name
+  Future<String> getUserProfileName() async {
+    if (_currentUserId == null) return '';
+
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData['name'] != null) {
+          final userName = userData['name'].toString();
+          if (userName.isNotEmpty) {
+            return userName;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error getting user profile name: $e');
+    }
+
+    // Fallback to Firebase Auth displayName
+    final currentUser = _auth.currentUser;
+    return currentUser?.displayName ?? '';
+  }
+
   // Cek apakah produk sudah ada di keranjang
   bool isInCart(String productId) {
     return _items.any((item) => item.product.id == productId);
@@ -323,13 +410,52 @@ class CartProvider extends ChangeNotifier {
           // Load other cart properties
           _selectedDiscount = data['selectedDiscount'] ?? '';
           _discountAmount = data['discountAmount'] ?? 0;
-          _shippingAddress = data['shippingAddress'] ?? 'Jl. Tirto Utomo';
+
+          // Only load shipping address from cart if it exists and is different from default
+          // This allows user to have custom address per cart session
+          if (data['shippingAddress'] != null && data['shippingAddress'].toString().isNotEmpty) {
+            _shippingAddress = data['shippingAddress'];
+          }
+          // If no address in cart, keep the one loaded from user profile
 
           notifyListeners();
         }
       }
     } catch (e) {
       debugPrint('Error loading cart from Firestore: $e');
+    }
+  }
+
+  // Load user's default address from their profile
+  Future<void> _loadUserAddress() async {
+    if (_currentUserId == null) return;
+
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        if (userData != null && userData['address'] != null) {
+          final userAddress = userData['address'].toString();
+          if (userAddress.isNotEmpty) {
+            _shippingAddress = userAddress;
+          } else {
+            _shippingAddress = '';
+          }
+        } else {
+          _shippingAddress = '';
+        }
+      } else {
+        _shippingAddress = '';
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading user address: $e');
+      _shippingAddress = '';
+      notifyListeners();
     }
   }
 
@@ -356,7 +482,7 @@ class CartProvider extends ChangeNotifier {
     _items.clear();
     _selectedDiscount = '';
     _discountAmount = 0;
-    _shippingAddress = 'Jl. Tirto Utomo';
+    _shippingAddress = '';
     notifyListeners();
   }
 }
