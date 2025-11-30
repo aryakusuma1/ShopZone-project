@@ -867,13 +867,13 @@ class _CartPageState extends State<CartPage> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: ElevatedButton(
-                                        onPressed: () {
+                                        onPressed: () async {
                                           // Get providers
                                           final cart = Provider.of<CartProvider>(context, listen: false);
                                           final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
-                                          // Create order
-                                          final orderId = orderProvider.createOrder(
+                                          // Create order (now async)
+                                          final orderId = await orderProvider.createOrder(
                                             items: cart.items,
                                             totalPrice: cart.totalPrice,
                                             discountAmount: cart.discountAmount,
@@ -888,15 +888,17 @@ class _CartPageState extends State<CartPage> {
                                           cart.clearCart();
 
                                           // Close dialog
-                                          Navigator.pop(context);
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
 
-                                          // Navigate to order detail
-                                          if (order != null) {
-                                            Navigator.pushReplacementNamed(
-                                              context,
-                                              AppRoutes.orderDetail,
-                                              arguments: order,
-                                            );
+                                            // Navigate to order detail
+                                            if (order != null) {
+                                              Navigator.pushReplacementNamed(
+                                                context,
+                                                AppRoutes.orderDetail,
+                                                arguments: order,
+                                              );
+                                            }
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
