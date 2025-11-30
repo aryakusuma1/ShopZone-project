@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
+import 'dart:math';
 import '../models/order.dart';
 import '../models/cart_item.dart';
 
@@ -9,7 +10,6 @@ class OrderProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final List<Order> _orders = [];
-  int _orderCounter = 277280289; // Starting order number from the screenshot
   String? _currentUserId;
 
   OrderProvider() {
@@ -40,20 +40,63 @@ class OrderProvider extends ChangeNotifier {
   // Getter untuk jumlah pesanan
   int get orderCount => _orders.length;
 
+  // Generate random alphanumeric string (uppercase letters and numbers only)
+  String _generateRandomCode(int length) {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars like O,0,I,1
+    final random = Random.secure();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+
+  // Generate unique order ID with format: SZ-YYMMDD-XXXX
+  // Example: SZ-251130-K7M9
+  Future<String> _generateOrderId() async {
+    final now = DateTime.now();
+
+    // Format date part: YYMMDD
+    final year = now.year.toString().substring(2); // Last 2 digits of year
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    final datePart = '$year$month$day';
+
+    // Try to generate unique ID (max 5 attempts)
+    for (int attempt = 0; attempt < 5; attempt++) {
+      // Generate random code
+      final randomCode = _generateRandomCode(4);
+      final orderId = 'SZ-$datePart-$randomCode';
+
+      // Check if this ID already exists in Firestore
+      final orderDoc = await _firestore.collection('orders').doc(orderId).get();
+
+      if (!orderDoc.exists) {
+        // ID is unique, return it
+        return orderId;
+      }
+
+      // ID already exists, try again with different random code
+      debugPrint('Order ID collision detected: $orderId, retrying...');
+    }
+
+    // Fallback: If all attempts failed, use timestamp suffix for guaranteed uniqueness
+    final timestamp = now.millisecondsSinceEpoch % 10000; // Last 4 digits
+    final orderId = 'SZ-$datePart-$timestamp';
+    debugPrint('Using timestamp-based fallback ID: $orderId');
+    return orderId;
+  }
+
   // Buat pesanan baru
-  String createOrder({
+  Future<String> createOrder({
     required List<CartItem> items,
     required int totalPrice,
     required int discountAmount,
     required int finalPrice,
     required String shippingAddress,
-  }) {
+  }) async {
     if (_currentUserId == null) {
       debugPrint('ERROR: Cannot create order - user not logged in');
       throw Exception('User must be logged in to create an order');
     }
 
-    final orderId = '#${_orderCounter++}';
+    final orderId = await _generateOrderId();
     final now = DateTime.now();
 
     final order = Order(
@@ -163,12 +206,6 @@ class OrderProvider extends ChangeNotifier {
         try {
           final order = Order.fromJson(doc.data() as Map<String, dynamic>);
           _orders.add(order);
-
-          // Update order counter if needed
-          final orderNumber = int.tryParse(order.id.replaceAll('#', ''));
-          if (orderNumber != null && orderNumber >= _orderCounter) {
-            _orderCounter = orderNumber + 1;
-          }
         } catch (e) {
           debugPrint('Error parsing order ${doc.id}: $e');
         }
