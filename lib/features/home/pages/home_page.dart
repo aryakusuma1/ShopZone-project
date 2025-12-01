@@ -23,26 +23,28 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  List<Product> _sortProducts(List<Product> products) {
-    switch (selectedTab) {
-      case 'Terlaris':
-        products.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-      case 'Termurah':
-        products.sort((a, b) => a.price.compareTo(b.price));
-        break;
-      case 'Terlaku':
-        // Keep original order (by createdAt from Firestore)
-        break;
-      default:
-        // Keep original order
-        break;
-    }
-    return products;
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Determine the query based on the selected tab
+    Query productsQuery;
+    if (selectedTab == 'Terverifikasi') {
+      productsQuery = FirebaseFirestore.instance
+          .collection('products')
+          .where('verified', isEqualTo: true);
+    } else if (selectedTab == 'Terlaris') {
+      productsQuery = FirebaseFirestore.instance
+          .collection('products')
+          .orderBy('sold', descending: true);
+    } else if (selectedTab == 'Termurah') {
+      productsQuery = FirebaseFirestore.instance
+          .collection('products')
+          .orderBy('price', descending: false);
+    } else {
+      productsQuery = FirebaseFirestore.instance
+          .collection('products')
+          .orderBy('createdAt', descending: true);
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -129,7 +131,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Category Tabs (Terlaris, Termurah, Terlaku)
+          // Category Tabs (Terlaris, Termurah, Terverifikasi)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -138,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 16),
                 _buildTab('Termurah'),
                 const SizedBox(width: 16),
-                _buildTab('Terlaku'),
+                _buildTab('Terverifikasi'), // Changed from 'Terlaku'
               ],
             ),
           ),
@@ -148,10 +150,7 @@ class _HomePageState extends State<HomePage> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('products')
-                    .orderBy('createdAt', descending: true)
-                    .snapshots(),
+                stream: productsQuery.snapshots(), // Using the dynamic query
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -193,11 +192,11 @@ class _HomePageState extends State<HomePage> {
 
                   // Convert to Product objects
                   List<Product> products = productDocs.map((doc) {
-                    return Product.fromJson(doc.data() as Map<String, dynamic>);
+                    final data = doc.data() as Map<String, dynamic>;
+                    // Manually add the document ID to the data map
+                    data['id'] = doc.id;
+                    return Product.fromJson(data);
                   }).toList();
-
-                  // Sort products based on selected tab
-                  products = _sortProducts(products);
 
                   return GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

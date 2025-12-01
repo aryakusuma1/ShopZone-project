@@ -1,14 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shopzone/core/constants/colors.dart';
 import 'package:shopzone/core/constants/text_styles.dart';
-import 'package:shopzone/features/home/data/dummy_products.dart';
 import 'package:shopzone/shared/models/product.dart';
 import 'package:shopzone/shared/widgets/product_card.dart';
-import 'package:shopzone/routes/app_routes.dart'; // Import app_routes
+import 'package:shopzone/routes/app_routes.dart';
 
 class SearchResultsPage extends StatefulWidget {
-  final String? initialQuery;
-  const SearchResultsPage({super.key, this.initialQuery});
+  const SearchResultsPage({super.key});
 
   @override
   State<SearchResultsPage> createState() => _SearchResultsPageState();
@@ -16,282 +15,28 @@ class SearchResultsPage extends StatefulWidget {
 
 class _SearchResultsPageState extends State<SearchResultsPage> {
   final TextEditingController _searchController = TextEditingController();
-  final GlobalKey _searchBarKey =
-      GlobalKey(); // New GlobalKey for the search bar
-  List<Product> _allProducts = [];
-  List<Product> _filteredProducts = [];
-  String _selectedSortTab = 'Terlaris'; // Terlaris, Termurah, Terdekat
-  String? _selectedPriceFilter;
-  String? _selectedConditionFilter; // Renamed from _selectedCategoryFilter
-  String? _selectedRatingFilter;
-  bool _showResults = false; // New state to control visibility of results area
-
-  // State for dropdown visibility
-  OverlayEntry? _priceDropdownOverlay;
-  OverlayEntry?
-  _conditionDropdownOverlay; // Renamed from _categoryDropdownOverlay
-  OverlayEntry? _ratingDropdownOverlay;
-
-  final GlobalKey _priceChipKey = GlobalKey();
-  final GlobalKey _conditionChipKey =
-      GlobalKey(); // Renamed from _categoryChipKey
-  final GlobalKey _ratingChipKey = GlobalKey();
-
-  // Options for filters
-  final List<String> _priceOptions = ['Harga', 'Termurah', 'Termahal'];
-  final List<String> _conditionOptions = [
-    'Kondisi',
-    'baru',
-    'bekas',
-  ]; // Changed from _categoryOptions
-  final List<String> _ratingOptions = ['Rating', '5', '4', '3', '2', '1'];
+  String _selectedSortTab = 'Terlaris';
+  String? _selectedCondition;
+  String? _selectedRating;
+  List<Product> _displayedProducts = [];
 
   @override
-  void initState() {
-    super.initState();
-    _allProducts = DummyProducts.getAllProductsWithExtra();
-
-    // Populate category options based on dummy products
-    // _categoryOptions is now hardcoded as _conditionOptions, no dynamic population
-
-    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
-      _searchController.text = widget.initialQuery!;
-      _showResults = true; // Show results if an initial query is provided
-      _filterAndSortProducts(); // Filter immediately
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final query = ModalRoute.of(context)!.settings.arguments as String?;
+    if (query != null && query.isNotEmpty && _searchController.text.isEmpty) {
+      _searchController.text = query;
     }
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _hideDropdownOverlay(_priceDropdownOverlay);
-    _hideDropdownOverlay(_conditionDropdownOverlay); // Updated
-    _hideDropdownOverlay(_ratingDropdownOverlay);
-    super.dispose();
-  }
-
-  void _filterAndSortProducts() {
-    List<Product> tempProducts = _allProducts.where((product) {
-      final query = _searchController.text.toLowerCase();
-      final matchesQuery = product.name.toLowerCase().contains(query);
-
-      // Apply price filter
-      bool matchesPriceFilter = true;
-      if (_selectedPriceFilter != null) {
-        if (_selectedPriceFilter == 'Termurah') {
-          // This will be handled by sorting, not direct filtering
-        } else if (_selectedPriceFilter == 'Termahal') {
-          // This will be handled by sorting, not direct filtering
-        }
-        // Specific price range filtering logic would go here if needed.
-        // For now, these are only for sorting, not initial price range filtering.
-      }
-
-      // Apply condition filter
-      final matchesConditionFilter =
-          _selectedConditionFilter == null ||
-          _selectedConditionFilter == 'Kondisi' ||
-          product.condition.toLowerCase() ==
-              _selectedConditionFilter!.toLowerCase();
-
-      // Apply rating filter
-      bool matchesRatingFilter = true;
-      if (_selectedRatingFilter != null && _selectedRatingFilter != 'Rating') {
-        matchesRatingFilter =
-            product.rating >= double.parse(_selectedRatingFilter!);
-      }
-
-      return matchesQuery &&
-          matchesPriceFilter &&
-          matchesConditionFilter && // Updated
-          matchesRatingFilter;
-    }).toList();
-
-    // Apply sorting
-    switch (_selectedSortTab) {
-      case 'Terlaris':
-        tempProducts.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-      case 'Termurah':
-        tempProducts.sort((a, b) => a.price.compareTo(b.price));
-        break;
-      case 'Terdekat':
-        // No geographical data, so just maintain current order or default to relevance
-        break;
-    }
-
-    setState(() {
-      _filteredProducts = tempProducts;
-    });
-  }
-
-  void _onSortTabChanged(String tab) {
-    setState(() {
-      _selectedSortTab = tab;
-    });
-    // Close any open dropdowns when changing sort tab
-    _hideAllDropdowns();
-    _filterAndSortProducts(); // Re-perform search with new sorting
-  }
-
-  void _hideAllDropdowns() {
-    _hideDropdownOverlay(_priceDropdownOverlay);
-    _hideDropdownOverlay(_conditionDropdownOverlay); // Updated
-    _hideDropdownOverlay(_ratingDropdownOverlay);
-    _priceDropdownOverlay = null;
-    _conditionDropdownOverlay = null; // Updated
-    _ratingDropdownOverlay = null;
-  }
-
-  void _showDropdownOverlay(
-    GlobalKey chipKey,
-    List<String> options,
-    String? selectedValue,
-    ValueChanged<String> onSelected,
-    OverlayEntry? currentOverlay,
-    Function(OverlayEntry?) updateOverlay, {
-    double dropdownWidth = 140.0,
-  }) {
-    if (currentOverlay != null) {
-      _hideDropdownOverlay(currentOverlay);
-      updateOverlay(null);
-      return;
-    }
-
-    // Close any other open dropdowns and nullify their state immediately
-    if (chipKey != _priceChipKey && _priceDropdownOverlay != null) {
-      _hideDropdownOverlay(_priceDropdownOverlay);
-      _priceDropdownOverlay = null;
-    }
-    if (chipKey != _conditionChipKey && _conditionDropdownOverlay != null) {
-      // Updated
-      _hideDropdownOverlay(_conditionDropdownOverlay); // Updated
-      _conditionDropdownOverlay = null; // Updated
-    }
-    if (chipKey != _ratingChipKey && _ratingDropdownOverlay != null) {
-      _hideDropdownOverlay(_ratingDropdownOverlay);
-      _ratingDropdownOverlay = null;
-    }
-
-    // Get the position and size of the tapped chip for alignment
-    final RenderBox? chipRenderBox =
-        chipKey.currentContext?.findRenderObject() as RenderBox?;
-    if (chipRenderBox == null) return;
-
-    final chipOffset = chipRenderBox.localToGlobal(Offset.zero);
-    final chipSize = chipRenderBox.size;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    final double topPosition = chipOffset.dy + chipSize.height + 4; // 4px padding
-    double leftPosition = chipOffset.dx;
-
-    // Adjust left position to prevent overflow from the right edge
-    if (leftPosition + dropdownWidth > screenWidth) {
-      leftPosition = screenWidth - dropdownWidth - 16; // 16px padding from edge
-    }
-    
-    // Ensure it doesn't go off-screen on the left (though less likely with this setup)
-    if (leftPosition < 16) {
-      leftPosition = 16;
-    }
-
-    final OverlayEntry overlayEntry = OverlayEntry(
-      builder: (context) {
-        return Positioned(
-          top: topPosition,
-          left: leftPosition,
-          width: dropdownWidth,
-          child: Material(
-            color: Colors.transparent,
-            child: _buildDropdownContent(
-              options: options,
-              selectedValue: selectedValue,
-              onSelected: (option) {
-                onSelected(option);
-                _hideAllDropdowns();
-              },
-            ),
-          ),
-        );
-      },
-    );
-
-    Overlay.of(context).insert(overlayEntry);
-    updateOverlay(overlayEntry);
-  }
-
-  void _hideDropdownOverlay(OverlayEntry? overlayEntry) {
-    overlayEntry?.remove();
-  }
-
-  Widget _buildDropdownContent({
-    required List<String> options,
-    required String? selectedValue,
-    required ValueChanged<String> onSelected,
-  }) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Align dropdown content to start
-          children: options.map((option) {
-            return InkWell(
-              onTap: () => onSelected(option),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      option,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: selectedValue == option
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: selectedValue == option
-                            ? AppColors.primary
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    if (option == '5' ||
-                        option == '4' ||
-                        option == '3' ||
-                        option == '2' ||
-                        option == '1')
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4.0),
-                        child: Icon(Icons.star, color: Colors.amber, size: 16),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
   }
 
   Widget _buildSortTab(String title) {
     final bool isSelected = _selectedSortTab == title;
     return GestureDetector(
-      onTap: () => _onSortTabChanged(title),
+      onTap: () {
+        setState(() {
+          _selectedSortTab = title;
+        });
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
@@ -309,363 +54,305 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     );
   }
 
+  Widget _buildFilterDropdown({
+    required String hint,
+    required String? value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Expanded(
+      child: Container(
+        height: 40,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: true,
+            hint: Text(
+              hint,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            value: value,
+            items: items,
+            onChanged: onChanged,
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.textSecondary,
+            ),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textPrimary,
+            ),
+            dropdownColor: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(8),
+            elevation: 0,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    String? priceDropdownValue;
+    if (_selectedSortTab == 'Termurah' || _selectedSortTab == 'Termahal') {
+      priceDropdownValue = _selectedSortTab;
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
         elevation: 0,
+        shadowColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () {
-            // Navigate back to SearchPage and pass the current query
-            Navigator.pushReplacementNamed(
+          onPressed: () => Navigator.pop(context),
+        ),
+        titleSpacing: 0,
+        title: Container(
+          height: 40,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: TextFormField(
+            controller: _searchController,
+            readOnly: true,
+            onTap: () => Navigator.pushReplacementNamed(
               context,
               AppRoutes.search,
               arguments: _searchController.text,
-            );
-          },
-        ),
-        titleSpacing: 0,
-        title: Expanded(
-          // Wrap the Container with Expanded to give it maximum width
-          child: Container(
-            key:
-                _searchBarKey, // Assign the GlobalKey to the search bar container
-            height: 40,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
             ),
-            child: TextFormField(
-              controller: _searchController,
-              readOnly: true, // Make it read-only
-              textAlignVertical:
-                  TextAlignVertical.center, // Added for vertical alignment
-              onTap: () {
-                // Navigate back to SearchPage when the search bar is tapped
-                Navigator.pushReplacementNamed(
-                  context,
-                  AppRoutes.search,
-                  arguments: _searchController.text,
-                );
-              },
-              decoration: InputDecoration(
-                hintText: 'Cari di Belanja',
-                hintStyle: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textHint,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: AppColors.textSecondary,
-                ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(
-                          Icons.clear,
-                          color: AppColors.textSecondary,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          // No filtering needed here as it's read-only
-                        },
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8, // Adjusted to 8 for more horizontal space
-                  vertical: 0,
-                ), // Adjusted padding
+            decoration: InputDecoration(
+              hintText: 'Cari di Belanja',
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
               ),
+              border: InputBorder.none,
             ),
           ),
         ),
       ),
-      body: Stack(
-        // Use Stack to overlay dropdowns
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Filter Chips
-              if (_showResults) // Show filters only if results are shown
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Wrap(
-                    alignment:
-                        WrapAlignment.start, // Explicitly left-align chips
-                    spacing: 8.0, // Space between chips
-                    runSpacing: 8.0, // Space between lines of chips
-                    children: [
-                      // Price Filter Chip
-                      GestureDetector(
-                        key: _priceChipKey,
-                        onTap: () {
-                          _showDropdownOverlay(
-                            _priceChipKey,
-                            _priceOptions,
-                            _selectedPriceFilter,
-                            (option) {
-                              setState(() {
-                                _selectedPriceFilter = option;
-                              });
-                              _filterAndSortProducts();
-                            },
-                            _priceDropdownOverlay,
-                            (overlay) => _priceDropdownOverlay = overlay,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _priceDropdownOverlay != null
-                                ? AppColors.primary
-                                : AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _priceDropdownOverlay != null
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedPriceFilter ?? 'Harga',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: _priceDropdownOverlay != null
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: _priceDropdownOverlay != null
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                _priceDropdownOverlay != null
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                size: 16,
-                                color: _priceDropdownOverlay != null
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                              ),
-                            ],
-                          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _buildFilterDropdown(
+                      hint: 'Harga',
+                      value: priceDropdownValue,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text("Harga"),
                         ),
-                      ),
-                      // Condition Filter Chip (formerly Category Filter)
-                      GestureDetector(
-                        key: _conditionChipKey, // Updated
-                        onTap: () {
-                          _showDropdownOverlay(
-                            _conditionChipKey, // Updated
-                            _conditionOptions, // Updated
-                            _selectedConditionFilter, // Updated
-                            (option) {
-                              setState(() {
-                                _selectedConditionFilter = option; // Updated
-                              });
-                              _filterAndSortProducts();
-                            },
-                            _conditionDropdownOverlay, // Updated
-                            (overlay) =>
-                                _conditionDropdownOverlay = overlay, // Updated
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                _conditionDropdownOverlay !=
-                                    null // Updated
-                                ? AppColors.primary
-                                : AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color:
-                                  _conditionDropdownOverlay !=
-                                      null // Updated
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedConditionFilter ??
-                                    'Kondisi', // Updated text
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color:
-                                      _conditionDropdownOverlay !=
-                                          null // Updated
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight:
-                                      _conditionDropdownOverlay !=
-                                          null // Updated
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                _conditionDropdownOverlay !=
-                                        null // Updated
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                size: 16,
-                                color:
-                                    _conditionDropdownOverlay !=
-                                        null // Updated
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                              ),
-                            ],
-                          ),
+                        const DropdownMenuItem<String>(
+                          value: 'Termurah',
+                          child: Text('Termurah'),
                         ),
-                      ),
-                      // Rating Filter Chip
-                      GestureDetector(
-                        key: _ratingChipKey,
-                        onTap: () {
-                          _showDropdownOverlay(
-                            _ratingChipKey,
-                            _ratingOptions,
-                            _selectedRatingFilter,
-                            (option) {
-                              setState(() {
-                                _selectedRatingFilter = option;
-                              });
-                              _filterAndSortProducts();
-                            },
-                            _ratingDropdownOverlay,
-                            (overlay) => _ratingDropdownOverlay = overlay,
-                            dropdownWidth: 100.0,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _ratingDropdownOverlay != null
-                                ? AppColors.primary
-                                : AppColors.cardBackground,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _ratingDropdownOverlay != null
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedRatingFilter ?? 'Rating',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: _ratingDropdownOverlay != null
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: _ratingDropdownOverlay != null
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                _ratingDropdownOverlay != null
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                size: 16,
-                                color: _ratingDropdownOverlay != null
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                              ),
-                            ],
-                          ),
+                        const DropdownMenuItem<String>(
+                          value: 'Termahal',
+                          child: Text('Termahal'),
                         ),
-                      ),
-                    ], // Close children list for Wrap
-                  ),
-                ),
-              // Category Tabs (Terlaris, Termurah, Terdekat)
-              if (_showResults)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: AppColors.border, width: 1),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSortTab = value ?? 'Terlaris';
+                        });
+                      },
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      _buildSortTab('Terlaris'),
-                      const SizedBox(width: 16),
-                      _buildSortTab('Termurah'),
-                      const SizedBox(width: 16),
-                      _buildSortTab('Terdekat'),
-                    ],
-                  ),
+                    _buildFilterDropdown(
+                      hint: 'Kategori',
+                      value: _selectedCondition,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text("Kategori"),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'Baru',
+                          child: Text('Baru'),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'Bekas',
+                          child: Text('Bekas'),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedCondition = value),
+                    ),
+                    _buildFilterDropdown(
+                      hint: 'Rating',
+                      value: _selectedRating,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text("Rating"),
+                        ),
+                        ...['5', '4', '3', '2', '1'].map((rating) {
+                          return DropdownMenuItem(
+                            value: rating,
+                            child: Row(
+                              children: [
+                                Text(rating),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedRating = value),
+                    ),
+                  ],
                 ),
-              Expanded(
-                child: _showResults
-                    ? (_filteredProducts.isEmpty
-                          ? const Center(child: Text('No products found.'))
-                          : Padding(
-                              padding: const EdgeInsets.all(16.0),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    _buildSortTab('Terlaris'),
+                    const SizedBox(width: 8),
+                    _buildSortTab('Termurah'),
+                    const SizedBox(width: 8),
+                    _buildSortTab('Terverifikasi'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _buildProductQuery().snapshots(),
+              builder: (context, snapshot) {
+                // Show loading indicator at the top while preserving old data
+                final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+                if (snapshot.hasData) {
+                  // New data is available, update the displayed products
+                  final products = snapshot.data!.docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    data['id'] = doc.id;
+                    return Product.fromJson(data);
+                  }).toList();
+
+                  // Apply client-side search filtering
+                  final searchQuery = _searchController.text.toLowerCase();
+                  if (searchQuery.isNotEmpty) {
+                    _displayedProducts = products.where((product) {
+                      return product.name.toLowerCase().contains(searchQuery);
+                    }).toList();
+                  } else {
+                    _displayedProducts = products;
+                  }
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Terjadi Error: ${snapshot.error}'),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    // Non-intrusive loading indicator
+                    if (isLoading) const LinearProgressIndicator(minHeight: 2),
+                    Expanded(
+                      child: _displayedProducts.isEmpty
+                          ? Center(
+                              child: isLoading
+                                  ? const CircularProgressIndicator()
+                                  : const Text('Tidak ada produk yang cocok.'),
+                            )
+                          : Container(
+                              color: AppColors.background,
                               child: GridView.builder(
+                                padding: const EdgeInsets.all(16),
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 12,
-                                      childAspectRatio: 0.65,
-                                    ),
-                                itemCount: _filteredProducts.length,
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.65,
+                                ),
+                                itemCount: _displayedProducts.length,
                                 itemBuilder: (context, index) {
-                                  final product = _filteredProducts[index];
+                                  final product = _displayedProducts[index];
                                   return ProductCard(
                                     product: product,
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.productDetail,
-                                        arguments: product,
-                                      );
-                                    },
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.productDetail,
+                                      arguments: product,
+                                    ),
                                   );
                                 },
                               ),
-                            ))
-                    : const Center(
-                        child: Text('Enter a search term to see results.'),
-                      ),
-              ),
-            ],
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Query _buildProductQuery() {
+    Query query = FirebaseFirestore.instance.collection('products');
+
+    // Sorting logic based on the selected tab
+    switch (_selectedSortTab) {
+      case 'Terlaris':
+        query = query.orderBy('sold', descending: true);
+        break;
+      case 'Termurah':
+        query = query.orderBy('price', descending: false);
+        break;
+      case 'Termahal':
+        query = query.orderBy('price', descending: true);
+        break;
+      case 'Terverifikasi':
+        query = query.where('verified', isEqualTo: true);
+        break;
+      default:
+        query = query.orderBy('sold', descending: true); // Default to Terlaris
+    }
+
+    // Condition filter
+    if (_selectedCondition != null) {
+      query = query.where('condition', isEqualTo: _selectedCondition);
+    }
+
+    // Rating filter - Note: Firestore doesn't support inequality on multiple fields well.
+    // This part might need client-side filtering if combined with other range filters.
+    if (_selectedRating != null) {
+      final minRating = double.tryParse(_selectedRating!);
+      if (minRating != null) {
+        query = query.where('rating', isGreaterThanOrEqualTo: minRating);
+      }
+    }
+
+    return query;
   }
 }
