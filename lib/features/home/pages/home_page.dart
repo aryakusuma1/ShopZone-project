@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../shared/models/product.dart';
 import '../../../shared/widgets/product_card.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
-import '../data/dummy_products.dart';
 import '../../../routes/app_routes.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,37 +16,29 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // State untuk tab yang aktif
   String selectedTab = 'Terlaris';
-  List<Product> products = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProducts();
-  }
-
-  void _loadProducts() {
-    setState(() {
-      switch (selectedTab) {
-        case 'Terlaris':
-          products = DummyProducts.sortByRating();
-          break;
-        case 'Termurah':
-          products = DummyProducts.sortByPriceAsc();
-          break;
-        case 'Terlaku':
-          products = DummyProducts.getAllProducts();
-          break;
-        default:
-          products = DummyProducts.getAllProducts();
-      }
-    });
-  }
 
   void _onTabChanged(String tab) {
     setState(() {
       selectedTab = tab;
     });
-    _loadProducts();
+  }
+
+  List<Product> _sortProducts(List<Product> products) {
+    switch (selectedTab) {
+      case 'Terlaris':
+        products.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case 'Termurah':
+        products.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'Terlaku':
+        // Keep original order (by createdAt from Firestore)
+        break;
+      default:
+        // Keep original order
+        break;
+    }
+    return products;
   }
 
   @override
@@ -155,23 +147,77 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.65,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return ProductCard(
-                    product: product,
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.productDetail,
-                        arguments: product,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('products')
+                    .orderBy('createdAt', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${snapshot.error}'),
+                    );
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
+
+                  final productDocs = snapshot.data?.docs ?? [];
+
+                  if (productDocs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 80,
+                            color: Colors.grey[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Belum ada produk',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Convert to Product objects
+                  List<Product> products = productDocs.map((doc) {
+                    return Product.fromJson(doc.data() as Map<String, dynamic>);
+                  }).toList();
+
+                  // Sort products based on selected tab
+                  products = _sortProducts(products);
+
+                  return GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.65,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return ProductCard(
+                        product: product,
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.productDetail,
+                            arguments: product,
+                          );
+                        },
                       );
                     },
                   );

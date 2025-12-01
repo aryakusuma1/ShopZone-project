@@ -32,6 +32,7 @@ class AuthService {
         'uid': userCredential.user!.uid,
         'name': name,
         'email': email,
+        'role': 'customer', // Default role untuk registrasi normal
         'createdAt': FieldValue.serverTimestamp(),
       });
 

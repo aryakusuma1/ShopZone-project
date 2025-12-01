@@ -13,6 +13,8 @@ class Product {
   final double rating;
   final bool verified;
   final List<String>? userPhotos; // Foto asli dari pengguna
+  final int stock; // Stock produk (untuk admin)
+  final DateTime? createdAt; // Tanggal produk dibuat
 
   Product({
     required this.id,
@@ -28,6 +30,8 @@ class Product {
     this.rating = 0.0,
     this.verified = false,
     this.userPhotos,
+    this.stock = 0,
+    this.createdAt,
   });
 
   // Format harga ke Rupiah
@@ -53,6 +57,10 @@ class Product {
       userPhotos: json['userPhotos'] != null
           ? List<String>.from(json['userPhotos'])
           : null,
+      stock: json['stock'] ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
     );
   }
 
@@ -72,6 +80,8 @@ class Product {
       'rating': rating,
       'verified': verified,
       'userPhotos': userPhotos,
+      'stock': stock,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }
