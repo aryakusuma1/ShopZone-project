@@ -19,6 +19,10 @@ import '../features/address/pages/select_address_page.dart';
 import '../features/address/pages/add_edit_address_page.dart';
 import '../features/profile/pages/about_page.dart';
 import '../features/profile/pages/help_page.dart';
+import '../features/admin/pages/admin_dashboard_page.dart';
+import '../features/admin/pages/admin_products_page.dart';
+import '../features/admin/pages/admin_add_edit_product_page.dart';
+import '../features/admin/pages/admin_migrate_products_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
 import '../shared/models/complaint.dart';
@@ -105,6 +109,22 @@ class RouteGenerator {
 
       case AppRoutes.about:
         return MaterialPageRoute(builder: (_) => const AboutPage());
+
+      // Admin routes
+      case AppRoutes.adminDashboard:
+        return MaterialPageRoute(builder: (_) => const AdminDashboardPage());
+
+      case AppRoutes.adminProducts:
+        return MaterialPageRoute(builder: (_) => const AdminProductsPage());
+
+      case AppRoutes.adminAddEditProduct:
+        return MaterialPageRoute(
+          builder: (_) => const AdminAddEditProductPage(),
+          settings: settings,
+        );
+
+      case AppRoutes.adminMigrateProducts:
+        return MaterialPageRoute(builder: (_) => const AdminMigrateProductsPage());
 
       default:
         return MaterialPageRoute(

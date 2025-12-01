@@ -23,4 +23,12 @@ class AppRoutes {
   static const String addEditAddress = '/addEditAddress';
   static const String help = '/help';
   static const String about = '/about';
+
+  // Admin routes
+  static const String adminDashboard = '/adminDashboard';
+  static const String adminProducts = '/adminProducts';
+  static const String adminAddEditProduct = '/adminAddEditProduct';
+  static const String adminOrders = '/adminOrders';
+  static const String adminComplaints = '/adminComplaints';
+  static const String adminMigrateProducts = '/adminMigrateProducts';
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../routes/app_routes.dart';
@@ -88,12 +90,33 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
 
-        // Navigate to home page and remove all previous routes
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.home,
-          (route) => false,
-        );
+        // Check user role from Firestore
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+
+          final role = userDoc.data()?['role'] ?? 'customer';
+
+          // Navigate based on role
+          if (!mounted) return;
+
+          if (role == 'admin') {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.adminDashboard,
+              (route) => false,
+            );
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.home,
+              (route) => false,
+            );
+          }
+        }
       }
     }
   }

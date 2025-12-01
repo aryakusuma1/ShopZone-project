@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../routes/app_routes.dart';
@@ -28,8 +29,22 @@ class _SplashPageState extends State<SplashPage> {
     final User? currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser != null) {
-      // User sudah login, langsung ke Home
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      // User sudah login, cek role dari Firestore
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+
+      final role = userDoc.data()?['role'] ?? 'customer';
+
+      if (!mounted) return;
+
+      // Redirect berdasarkan role
+      if (role == 'admin') {
+        Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
     } else {
       // User belum login, ke Login page
       Navigator.pushReplacementNamed(context, AppRoutes.login);
