@@ -48,7 +48,8 @@ class RouteGenerator {
       case AppRoutes.searchResults:
         final args = settings.arguments as String?;
         return MaterialPageRoute(
-          builder: (_) => SearchResultsPage(initialQuery: args),
+          builder: (_) => const SearchResultsPage(),
+          settings: settings, // Pass settings directly so SearchResultsPage can access arguments
         );
 
       case AppRoutes.productDetail:

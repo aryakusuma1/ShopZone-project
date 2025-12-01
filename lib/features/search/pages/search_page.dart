@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shopzone/core/constants/colors.dart';
 import 'package:shopzone/core/constants/text_styles.dart';
 import 'package:shopzone/routes/app_routes.dart';
-import 'package:shopzone/features/home/data/dummy_products.dart'; // Import dummy products
+import 'package:shopzone/shared/models/product.dart';
+import 'package:shopzone/shared/widgets/product_card.dart';
 
 class SearchPage extends StatefulWidget {
   final String? initialQuery;
@@ -14,22 +16,16 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> _suggestions = [];
-  List<String> _allProductNames = []; // List to hold all product names
+  List<Product> _suggestions = [];
+  List<Product> _allProducts = [];
 
   @override
   void initState() {
     super.initState();
-    // Populate all product names from dummy data
-    _allProductNames = DummyProducts.getAllProductsWithExtra()
-        .map((product) => product.name)
-        .toList();
     if (widget.initialQuery != null) {
       _searchController.text = widget.initialQuery!;
     }
-    _onSearchChanged(
-      _searchController.text,
-    ); // Initialize suggestions based on initialQuery
+    _onSearchChanged(_searchController.text);
   }
 
   @override
@@ -41,8 +37,9 @@ class _SearchPageState extends State<SearchPage> {
   void _onSearchChanged(String query) {
     setState(() {
       if (query.isNotEmpty) {
-        _suggestions = _allProductNames
-            .where((name) => name.toLowerCase().contains(query.toLowerCase()))
+        _suggestions = _allProducts
+            .where((product) =>
+                product.name.toLowerCase().contains(query.toLowerCase()))
             .toList();
       } else {
         _suggestions = [];
@@ -53,8 +50,9 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
@@ -63,26 +61,22 @@ class _SearchPageState extends State<SearchPage> {
           },
         ),
         titleSpacing: 0,
-        title: Expanded(
-          // Wrap the Container with Expanded to give it maximum width
+        title: Container( // Changed from Expanded to Container
           child: Container(
             height: 40,
-            margin: const EdgeInsets.only(
-              right: 16,
-            ), // Add margin consistent with search_results_page
+            margin: const EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
-              color: AppColors.background, // Changed from cardBackground to background for pure white
+              color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.border),
             ),
             child: TextFormField(
               controller: _searchController,
               autofocus: true,
-              textAlign: TextAlign.start, // Explicitly align text to start
               onChanged: _onSearchChanged,
               onFieldSubmitted: (query) {
                 if (query.isNotEmpty) {
-                  Navigator.pushNamed(
+                  Navigator.pushReplacementNamed(
                     context,
                     AppRoutes.searchResults,
                     arguments: query,
@@ -90,7 +84,7 @@ class _SearchPageState extends State<SearchPage> {
                 }
               },
               decoration: InputDecoration(
-                isDense: true, // Reduces the overall height of the InputDecoration
+                isDense: true,
                 hintText: 'Cari di Belanja',
                 hintStyle: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textHint,
@@ -112,51 +106,71 @@ class _SearchPageState extends State<SearchPage> {
                       )
                     : null,
                 border: InputBorder.none,
-                // Adjusted contentPadding for better vertical centering with isDense
                 contentPadding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
               ),
             ),
           ),
         ),
       ),
-      body: _suggestions.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  Text('Suggestions', style: AppTextStyles.heading3),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _suggestions.length,
-                      itemBuilder: (context, index) {
-                        final suggestion = _suggestions[index];
-                        return ListTile(
-                          leading: const Icon(
-                            Icons.search,
-                            color: AppColors.textSecondary,
-                          ),
-                          title: Text(
-                            suggestion,
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppRoutes.searchResults,
-                              arguments: suggestion,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('products').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No products found.'));
+          }
+
+          _allProducts = snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            data['id'] = doc.id; // Include document ID in the data
+            return Product.fromJson(data);
+          }).toList();
+
+          return _suggestions.isNotEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      Text('Suggestions', style: AppTextStyles.heading3),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _suggestions.length,
+                          itemBuilder: (context, index) {
+                            final product = _suggestions[index];
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.search,
+                                color: AppColors.textSecondary,
+                              ),
+                              title: Text(
+                                product.name,
+                                style: AppTextStyles.bodyMedium,
+                              ),
+                              onTap: () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.searchResults,
+                                  arguments: product.name,
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
-          : Container(), // Empty container if no suggestions
+                )
+              : Container();
+        },
+      ),
     );
   }
 }

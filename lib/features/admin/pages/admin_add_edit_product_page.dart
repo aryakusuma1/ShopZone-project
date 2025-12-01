@@ -178,11 +178,13 @@ class _AdminAddEditProductPageState extends State<AdminAddEditProductPage> {
             ),
           );
         } else {
-          // Create new product
           final docRef = FirebaseFirestore.instance.collection('products').doc();
 
           productData['id'] = docRef.id;
           productData['createdAt'] = DateTime.now().toIso8601String();
+          productData['sold'] = 0; // Default sold count for new products
+          productData['name_lowercase'] =
+              _nameController.text.trim().toLowerCase(); // For searching
 
           await docRef.set(productData);
 

@@ -120,7 +120,7 @@ class OrderProvider extends ChangeNotifier {
     _orders.insert(0, order); // Insert at beginning to show newest first
     debugPrint('Created order $orderId for user $_currentUserId');
     notifyListeners();
-    _saveOrderToFirestore(order);
+    _commitOrderCreation(order);
 
     return orderId;
   }
@@ -155,86 +155,127 @@ class OrderProvider extends ChangeNotifier {
         statusTimestamps: updatedTimestamps,
       );
 
-      notifyListeners();
-      _saveOrderToFirestore(_orders[index]);
-    }
-  }
-
-  // Dapatkan pesanan berdasarkan status
-  List<Order> getOrdersByStatus(OrderStatus status) {
-    return _orders.where((order) => order.status == status).toList();
-  }
-
-  // Hapus pesanan (untuk testing)
-  void removeOrder(String orderId) {
-    _orders.removeWhere((order) => order.id == orderId);
-    notifyListeners();
-  }
-
-  // Clear semua pesanan (untuk testing)
-  void clearOrders() {
-    _orders.clear();
-    notifyListeners();
-  }
-
-  // Load orders from Firestore for current user
-  Future<void> _loadOrdersFromFirestore() async {
-    if (_currentUserId == null) return;
-
-    try {
-      QuerySnapshot querySnapshot;
-
-      try {
-        // Try to query with orderBy (requires composite index)
-        querySnapshot = await _firestore
-            .collection('orders')
-            .where('userId', isEqualTo: _currentUserId)
-            .orderBy('orderDate', descending: true)
-            .get();
-      } catch (e) {
-        // If composite index doesn't exist, fall back to simple query
-        debugPrint('Composite index not available, using simple query: $e');
-        querySnapshot = await _firestore
-            .collection('orders')
-            .where('userId', isEqualTo: _currentUserId)
-            .get();
-      }
-
-      _orders.clear();
-
-      for (var doc in querySnapshot.docs) {
-        try {
-          final order = Order.fromJson(doc.data() as Map<String, dynamic>);
-          _orders.add(order);
-        } catch (e) {
-          debugPrint('Error parsing order ${doc.id}: $e');
+            notifyListeners();
+            _updateOrderInFirestore(_orders[index]);
+          }
         }
+      
+        // Dapatkan pesanan berdasarkan status
+        List<Order> getOrdersByStatus(OrderStatus status) {
+          return _orders.where((order) => order.status == status).toList();
+        }
+      
+        // Hapus pesanan (untuk testing)
+        void removeOrder(String orderId) {
+          _orders.removeWhere((order) => order.id == orderId);
+          notifyListeners();
+        }
+      
+        // Clear semua pesanan (untuk testing)
+        void clearOrders() {
+          _orders.clear();
+          notifyListeners();
+        }
+      
+        // Load orders from Firestore for current user
+        Future<void> _loadOrdersFromFirestore() async {
+          if (_currentUserId == null) return;
+      
+          try {
+            QuerySnapshot querySnapshot;
+      
+            try {
+              // Try to query with orderBy (requires composite index)
+              querySnapshot = await _firestore
+                  .collection('orders')
+                  .where('userId', isEqualTo: _currentUserId)
+                  .orderBy('orderDate', descending: true)
+                  .get();
+            } catch (e) {
+              // If composite index doesn't exist, fall back to simple query
+              debugPrint('Composite index not available, using simple query: $e');
+              querySnapshot = await _firestore
+                  .collection('orders')
+                  .where('userId', isEqualTo: _currentUserId)
+                  .get();
+            }
+      
+            _orders.clear();
+      
+            for (var doc in querySnapshot.docs) {
+              try {
+                final order = Order.fromJson(doc.data() as Map<String, dynamic>);
+                _orders.add(order);
+              } catch (e) {
+                debugPrint('Error parsing order ${doc.id}: $e');
+              }
+            }
+      
+            // Sort orders by date in memory if we couldn't do it in the query
+            _orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+      
+            debugPrint('Loaded ${_orders.length} orders for user $_currentUserId');
+            notifyListeners();
+          } catch (e) {
+            debugPrint('Error loading orders from Firestore: $e');
+          }
+        }
+        
+        // Update existing order in Firestore (for status updates, etc.)
+        Future<void> _updateOrderInFirestore(Order order) async {
+          if (_currentUserId == null) return;
+      
+          try {
+            final orderData = order.toJson();
+            debugPrint('Updating order ${order.id} in Firestore with userId: ${order.userId}');
+            await _firestore
+                .collection('orders')
+                .doc(order.id)
+                .set(orderData); // Use set to fully overwrite or create if not exists
+            debugPrint('Order ${order.id} updated successfully');
+          } catch (e) {
+            debugPrint('Error updating order to Firestore: $e');
+          }
+        }
+        
+        // Save order to Firestore and update product sold counts atomically
+        Future<void> _commitOrderCreation(Order order) async {
+          if (_currentUserId == null) return;
+      
+          try {
+            // Create a new WriteBatch
+            final batch = _firestore.batch();
+      
+            // 1. Add the order to the 'orders' collection
+            final orderRef = _firestore.collection('orders').doc(order.id);
+            batch.set(orderRef, order.toJson());
+            debugPrint('Batch: Added set operation for new order ${order.id}');
+      // 2. Update the 'sold' count for each product in the order
+      for (final item in order.items) {
+        final productRef = _firestore.collection('products').doc(item.product.id);
+        final int quantitySold = item.quantity;
+
+        debugPrint('==== UPDATE PRODUK TERJUAL ====');
+        debugPrint('Produk ID: ${item.product.id}');
+        debugPrint('Nama Produk: ${item.product.name}');
+        debugPrint('Jumlah Terjual: $quantitySold');
+        debugPrint('===============================');
+
+        // Atomically increment the 'sold' field by the quantity purchased
+        batch.update(productRef, {
+          'sold': FieldValue.increment(quantitySold),
+        });
+        debugPrint('Batch: Added update for product ${item.product.id}, incrementing sold by $quantitySold');
       }
 
-      // Sort orders by date in memory if we couldn't do it in the query
-      _orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+      // Commit the batch
+      debugPrint('Mencoba melakukan commit batch ke Firestore...');
+      await batch.commit();
+      debugPrint('Order ${order.id} and product sold counts committed successfully');
 
-      debugPrint('Loaded ${_orders.length} orders for user $_currentUserId');
-      notifyListeners();
     } catch (e) {
-      debugPrint('Error loading orders from Firestore: $e');
-    }
-  }
-
-  // Save order to Firestore
-  Future<void> _saveOrderToFirestore(Order order) async {
-    if (_currentUserId == null) return;
-
-    try {
-      final orderData = order.toJson();
-      debugPrint('Saving order ${order.id} to Firestore with userId: ${order.userId}');
-      await _firestore
-          .collection('orders')
-          .doc(order.id)
-          .set(orderData);
-      debugPrint('Order ${order.id} saved successfully');
-    } catch (e) {
-      debugPrint('Error saving order to Firestore: $e');
+      debugPrint('!!!! ERROR saat commit order creation batch: $e !!!!');
+      // Optional: Add error handling or retry logic here
     }
   }
 

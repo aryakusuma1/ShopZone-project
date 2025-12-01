@@ -14,7 +14,9 @@ class Product {
   final bool verified;
   final List<String>? userPhotos; // Foto asli dari pengguna
   final int stock; // Stock produk (untuk admin)
+  final int sold; // Jumlah produk terjual (untuk sorting Terlaris)
   final DateTime? createdAt; // Tanggal produk dibuat
+  final String name_lowercase; // For case-insensitive search
 
   Product({
     required this.id,
@@ -31,8 +33,9 @@ class Product {
     this.verified = false,
     this.userPhotos,
     this.stock = 0,
+    this.sold = 0,
     this.createdAt,
-  });
+  }) : name_lowercase = name.toLowerCase();
 
   // Format harga ke Rupiah
   String get formattedPrice {
@@ -41,9 +44,10 @@ class Product {
 
   // Convert dari JSON (untuk Firebase/API nanti)
   factory Product.fromJson(Map<String, dynamic> json) {
+    final name = json['name'] as String? ?? '';
     return Product(
       id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: name,
       price: json['price'] ?? 0,
       imageUrl: json['imageUrl'] ?? '',
       category: json['category'] ?? '',
@@ -58,6 +62,7 @@ class Product {
           ? List<String>.from(json['userPhotos'])
           : null,
       stock: json['stock'] ?? 0,
+      sold: json['sold'] ?? 0,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -81,7 +86,9 @@ class Product {
       'verified': verified,
       'userPhotos': userPhotos,
       'stock': stock,
+      'sold': sold,
       'createdAt': createdAt?.toIso8601String(),
+      'name_lowercase': name_lowercase,
     };
   }
 }
