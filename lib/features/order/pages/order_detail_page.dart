@@ -3,6 +3,7 @@ import '../../../shared/models/order.dart';
 import '../../../shared/models/cart_item.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../routes/app_routes.dart';
 
 class OrderDetailPage extends StatelessWidget {
   final Order order;
@@ -64,7 +65,11 @@ class OrderDetailPage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    _showComplaintDialog(context);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.complaint,
+                      arguments: order,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE53935),
@@ -246,35 +251,6 @@ class OrderDetailPage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showComplaintDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text('Komplain / Retur'),
-          content: const Text(
-            'Fitur komplain dan retur sedang dalam pengembangan. Untuk sementara, silakan hubungi customer service kami.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.secondary,
-              ),
-              child: const Text('Mengerti'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

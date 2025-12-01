@@ -10,8 +10,10 @@ import '../features/product/pages/product_detail_page.dart';
 import '../features/cart/pages/cart_page.dart';
 import '../features/order/pages/orders_page.dart';
 import '../features/order/pages/order_detail_page.dart';
+import '../features/order/pages/complaint_page.dart';
 import '../features/profile/pages/profile_page.dart';
 import '../features/profile/pages/account_page.dart';
+import '../features/profile/pages/refund_page.dart';
 import '../features/address/pages/select_address_page.dart';
 import '../features/address/pages/add_edit_address_page.dart';
 import '../features/profile/pages/about_page.dart';
@@ -60,6 +62,15 @@ class RouteGenerator {
         return MaterialPageRoute(
           builder: (_) => OrderDetailPage(order: order),
         );
+
+      case AppRoutes.complaint:
+        final order = settings.arguments as Order;
+        return MaterialPageRoute(
+          builder: (_) => ComplaintPage(order: order),
+        );
+
+      case AppRoutes.refund:
+        return MaterialPageRoute(builder: (_) => const RefundPage());
 
       case AppRoutes.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
