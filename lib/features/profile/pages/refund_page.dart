@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../shared/models/complaint.dart';
-import 'package:intl/intl.dart';
+import '../../../shared/models/order.dart' as order_model;
+import '../../../routes/app_routes.dart';
 
 class RefundPage extends StatelessWidget {
   const RefundPage({super.key});
@@ -109,7 +110,7 @@ class RefundPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Belum ada komplain/refund',
+                    'Belum ada refund',
                     style: AppTextStyles.bodyLarge.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -131,7 +132,10 @@ class RefundPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             itemCount: complaints.length,
             itemBuilder: (context, index) {
-              return _ComplaintCard(complaint: complaints[index]);
+              return _RefundCard(
+                complaint: complaints[index],
+                userId: user.uid,
+              );
             },
           );
         },
@@ -140,16 +144,36 @@ class RefundPage extends StatelessWidget {
   }
 }
 
-class _ComplaintCard extends StatelessWidget {
+class _RefundCard extends StatelessWidget {
   final Complaint complaint;
+  final String userId;
 
-  const _ComplaintCard({required this.complaint});
+  const _RefundCard({
+    required this.complaint,
+    required this.userId,
+  });
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Diajukan';
+      case 'approved':
+        return 'Diperiksa';
+      case 'resolved':
+        return 'Disetujui';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return 'Diajukan';
+    }
+  }
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
         return AppColors.warning;
       case 'approved':
+        return Colors.blue;
       case 'resolved':
         return AppColors.success;
       case 'rejected':
@@ -159,168 +183,192 @@ class _ComplaintCard extends StatelessWidget {
     }
   }
 
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Menunggu';
-      case 'approved':
-        return 'Disetujui';
-      case 'resolved':
-        return 'Selesai';
-      case 'rejected':
-        return 'Ditolak';
-      default:
-        return status;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Use default locale instead of id_ID to avoid initialization error
-    final dateFormatter = DateFormat('dd MMM yyyy, HH:mm');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('orders')
+          .doc(complaint.orderId)
+          .get(),
+      builder: (context, snapshot) {
+        // Show loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Order ID: ${complaint.orderId}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        dateFormatter.format(complaint.createdAt),
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(complaint.status).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _getStatusText(complaint.status),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: _getStatusColor(complaint.status),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          );
+        }
 
-          // Content
-          Padding(
+        // Default values if order not found
+        String productName = complaint.issueType;
+        String productImage = complaint.imageUrl ?? '';
+        String productPrice = 'Rp 0';
+
+        // Get order data if available
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final orderData = snapshot.data!.data() as Map<String, dynamic>;
+          final order = order_model.Order.fromJson(orderData);
+
+          // Get first product from order
+          if (order.items.isNotEmpty) {
+            final firstItem = order.items.first;
+            productName = firstItem.product.name;
+            productImage = firstItem.product.imageUrl;
+          }
+
+          // Use order final price
+          productPrice = order.formattedFinalPrice;
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Issue Type
+                // Header dengan gambar dan info
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      _getIssueIcon(complaint.issueType),
-                      size: 20,
-                      color: AppColors.textSecondary,
+                    // Gambar produk
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey[100],
+                        image: productImage.isNotEmpty
+                            ? DecorationImage(
+                                image: NetworkImage(productImage),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: productImage.isEmpty
+                          ? Icon(
+                              Icons.inventory_2_outlined,
+                              color: Colors.grey[400],
+                              size: 30,
+                            )
+                          : null,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      complaint.issueType,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 12),
+                    // Info produk
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            productName,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            productPrice,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(complaint.status).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _getStatusText(complaint.status),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: _getStatusColor(complaint.status),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                // Description
+                // Deskripsi Refund
                 Text(
-                  complaint.description,
+                  'Detail Refund',
                   style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Refund Anda telah diajukan. Klik lihat untuk detail Refund.',
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 16),
 
-                // Image if available
-                if (complaint.imageUrl != null) ...[
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      complaint.imageUrl!,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 120,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                              size: 40,
-                            ),
-                          ),
-                        );
-                      },
+                // Button Lihat Detail
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.refundDetail,
+                        arguments: complaint,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Lihat Detail',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
-  }
-
-  IconData _getIssueIcon(String issueType) {
-    if (issueType.contains('tidak lengkap')) {
-      return Icons.inventory_2_outlined;
-    } else if (issueType.contains('rusak')) {
-      return Icons.broken_image_outlined;
-    } else if (issueType.contains('kadaluarsa')) {
-      return Icons.event_busy_outlined;
-    }
-    return Icons.error_outline;
   }
 }

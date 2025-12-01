@@ -16,6 +16,7 @@ class AppRoutes {
   static const String orderDetail = '/orderDetail';
   static const String complaint = '/complaint';
   static const String refund = '/refund';
+  static const String refundDetail = '/refundDetail';
   static const String profile = '/profile';
   static const String account = '/account';
   static const String selectAddress = '/selectAddress';

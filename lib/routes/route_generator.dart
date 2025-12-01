@@ -14,12 +14,14 @@ import '../features/order/pages/complaint_page.dart';
 import '../features/profile/pages/profile_page.dart';
 import '../features/profile/pages/account_page.dart';
 import '../features/profile/pages/refund_page.dart';
+import '../features/profile/pages/refund_detail_page.dart';
 import '../features/address/pages/select_address_page.dart';
 import '../features/address/pages/add_edit_address_page.dart';
 import '../features/profile/pages/about_page.dart';
 import '../features/profile/pages/help_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
+import '../shared/models/complaint.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -71,6 +73,12 @@ class RouteGenerator {
 
       case AppRoutes.refund:
         return MaterialPageRoute(builder: (_) => const RefundPage());
+
+      case AppRoutes.refundDetail:
+        final complaint = settings.arguments as Complaint;
+        return MaterialPageRoute(
+          builder: (_) => RefundDetailPage(complaint: complaint),
+        );
 
       case AppRoutes.profile:
         return MaterialPageRoute(builder: (_) => const ProfilePage());
