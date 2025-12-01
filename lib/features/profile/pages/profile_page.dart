@@ -123,15 +123,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // Refund Saya
               _buildMenuItem(
-                icon: Icons.notifications_outlined,
+                icon: Icons.receipt_long_outlined,
                 title: 'Refund Saya',
                 onTap: () {
-                  // TODO: Navigate to Refund page
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fitur Refund dalam pengembangan'),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.refund);
                 },
               ),
               const SizedBox(height: 24),
