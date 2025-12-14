@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
-import '../../../shared/models/complaint.dart';
+import '../../../shared/models/refund.dart';
 import 'package:intl/intl.dart';
 
 class RefundDetailPage extends StatelessWidget {
-  final Complaint complaint;
+  final Refund refund;
 
   const RefundDetailPage({
     super.key,
-    required this.complaint,
+    required this.refund,
   });
 
   int _getCurrentStep(String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
+      case 'requested':
         return 0; // Diajukan
-      case 'approved':
-        return 1; // Diperiksa
-      case 'resolved':
-        return 2; // Disetujui
+      case 'processing':
+        return 1; // Diproses
+      case 'completed':
+        return 2; // Selesai
       default:
         return 0;
     }
@@ -27,11 +27,11 @@ class RefundDetailPage extends StatelessWidget {
 
   String _getEstimatedCompletion(String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
+      case 'requested':
         return 'Perkiraan selesai 2-3 hari lagi';
-      case 'approved':
+      case 'processing':
         return 'Perkiraan selesai 1 hari lagi';
-      case 'resolved':
+      case 'completed':
         return 'Refund telah selesai';
       default:
         return 'Perkiraan selesai 2-3 hari lagi';
@@ -40,7 +40,7 @@ class RefundDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentStep = _getCurrentStep(complaint.status);
+    final currentStep = _getCurrentStep(refund.refundStatus);
     final dateFormatter = DateFormat('dd-MM-yyyy, HH:mm');
 
     return Scaffold(
@@ -71,7 +71,7 @@ class RefundDetailPage extends StatelessWidget {
               // Estimasi selesai
               Center(
                 child: Text(
-                  _getEstimatedCompletion(complaint.status),
+                  _getEstimatedCompletion(refund.refundStatus),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -87,7 +87,7 @@ class RefundDetailPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Timeline
-              _buildTimeline(complaint, dateFormatter),
+              _buildTimeline(refund, dateFormatter),
             ],
           ),
         ),
@@ -96,7 +96,7 @@ class RefundDetailPage extends StatelessWidget {
   }
 
   Widget _buildProgressStepper(int currentStep) {
-    final steps = ['Diajukan', 'Diperiksa', 'Disetujui'];
+    final steps = ['Diajukan', 'Diproses', 'Selesai'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,30 +158,30 @@ class RefundDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeline(Complaint complaint, DateFormat dateFormatter) {
+  Widget _buildTimeline(Refund refund, DateFormat dateFormatter) {
     // Create timeline based on status
     final List<Map<String, dynamic>> timeline = [];
 
     // Always add initial submission
     timeline.add({
       'message': 'Permintaan refund diajukan',
-      'timestamp': complaint.createdAt,
+      'timestamp': refund.createdAt,
     });
 
-    // Add processed if approved or resolved
-    if (complaint.status.toLowerCase() == 'approved' ||
-        complaint.status.toLowerCase() == 'resolved') {
+    // Add processing if status is processing or completed
+    if (refund.refundStatus.toLowerCase() == 'processing' ||
+        refund.refundStatus.toLowerCase() == 'completed') {
       timeline.add({
-        'message': 'Permintaan refund diterima',
-        'timestamp': complaint.createdAt.add(const Duration(hours: 2)),
+        'message': 'Refund sedang diproses',
+        'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 2)),
       });
     }
 
-    // Add resolved if status is resolved
-    if (complaint.status.toLowerCase() == 'resolved') {
+    // Add completed if status is completed
+    if (refund.refundStatus.toLowerCase() == 'completed') {
       timeline.add({
-        'message': 'Refund telah disetujui dan diproses',
-        'timestamp': complaint.createdAt.add(const Duration(days: 1)),
+        'message': 'Dana telah dikembalikan',
+        'timestamp': refund.completedAt ?? refund.createdAt.add(const Duration(days: 1)),
       });
     }
 
