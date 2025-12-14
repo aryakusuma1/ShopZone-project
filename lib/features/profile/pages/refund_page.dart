@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
-import '../../../shared/models/complaint.dart';
+import '../../../shared/models/refund.dart';
 import '../../../shared/models/order.dart' as order_model;
 import '../../../routes/app_routes.dart';
 
@@ -53,7 +53,7 @@ class RefundPage extends StatelessWidget {
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('complaints')
+            .collection('refunds')
             .where('userId', isEqualTo: user.uid)
             .snapshots(),
         builder: (context, snapshot) {
@@ -96,9 +96,9 @@ class RefundPage extends StatelessWidget {
             );
           }
 
-          final complaintDocs = snapshot.data?.docs ?? [];
+          final refundDocs = snapshot.data?.docs ?? [];
 
-          if (complaintDocs.isEmpty) {
+          if (refundDocs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -120,20 +120,20 @@ class RefundPage extends StatelessWidget {
             );
           }
 
-          // Convert to Complaint objects and sort by date (newest first)
-          final complaints = complaintDocs.map((doc) {
-            return Complaint.fromJson(doc.data() as Map<String, dynamic>);
+          // Convert to Refund objects and sort by date (newest first)
+          final refunds = refundDocs.map((doc) {
+            return Refund.fromJson(doc.data() as Map<String, dynamic>);
           }).toList();
 
           // Sort in client side to avoid needing Firestore index
-          complaints.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          refunds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: complaints.length,
+            itemCount: refunds.length,
             itemBuilder: (context, index) {
               return _RefundCard(
-                complaint: complaints[index],
+                refund: refunds[index],
                 userId: user.uid,
               );
             },
@@ -145,36 +145,21 @@ class RefundPage extends StatelessWidget {
 }
 
 class _RefundCard extends StatelessWidget {
-  final Complaint complaint;
+  final Refund refund;
   final String userId;
 
   const _RefundCard({
-    required this.complaint,
+    required this.refund,
     required this.userId,
   });
 
-  String _getStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Diajukan';
-      case 'approved':
-        return 'Diperiksa';
-      case 'resolved':
-        return 'Disetujui';
-      case 'rejected':
-        return 'Ditolak';
-      default:
-        return 'Diajukan';
-    }
-  }
-
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
+      case 'requested':
         return AppColors.warning;
-      case 'approved':
+      case 'processing':
         return Colors.blue;
-      case 'resolved':
+      case 'completed':
         return AppColors.success;
       case 'rejected':
         return AppColors.error;
@@ -188,7 +173,7 @@ class _RefundCard extends StatelessWidget {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('orders')
-          .doc(complaint.orderId)
+          .doc(refund.orderId)
           .get(),
       builder: (context, snapshot) {
         // Show loading state
@@ -212,9 +197,8 @@ class _RefundCard extends StatelessWidget {
         }
 
         // Default values if order not found
-        String productName = complaint.issueType;
-        String productImage = complaint.imageUrl ?? '';
-        String productPrice = 'Rp 0';
+        String productName = 'Order ${refund.orderId}';
+        String productImage = '';
 
         // Get order data if available
         if (snapshot.hasData && snapshot.data!.exists) {
@@ -227,9 +211,6 @@ class _RefundCard extends StatelessWidget {
             productName = firstItem.product.name;
             productImage = firstItem.product.imageUrl;
           }
-
-          // Use order final price
-          productPrice = order.formattedFinalPrice;
         }
 
         return Container(
@@ -286,7 +267,7 @@ class _RefundCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            productPrice,
+                            refund.formattedRefundAmount,
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -301,13 +282,13 @@ class _RefundCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(complaint.status).withValues(alpha: 0.1),
+                        color: _getStatusColor(refund.refundStatus).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        _getStatusText(complaint.status),
+                        refund.statusText,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: _getStatusColor(complaint.status),
+                          color: _getStatusColor(refund.refundStatus),
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -343,7 +324,7 @@ class _RefundCard extends StatelessWidget {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.refundDetail,
-                        arguments: complaint,
+                        arguments: refund,
                       );
                     },
                     style: ElevatedButton.styleFrom(

@@ -25,7 +25,7 @@ import '../features/admin/pages/admin_add_edit_product_page.dart';
 import '../features/admin/pages/admin_migrate_products_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
-import '../shared/models/complaint.dart';
+import '../shared/models/refund.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -80,9 +80,9 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const RefundPage());
 
       case AppRoutes.refundDetail:
-        final complaint = settings.arguments as Complaint;
+        final refund = settings.arguments as Refund;
         return MaterialPageRoute(
-          builder: (_) => RefundDetailPage(complaint: complaint),
+          builder: (_) => RefundDetailPage(refund: refund),
         );
 
       case AppRoutes.profile:

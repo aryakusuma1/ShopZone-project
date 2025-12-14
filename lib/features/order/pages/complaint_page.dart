@@ -10,7 +10,6 @@ import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/complaint.dart';
-import '../../../routes/app_routes.dart';
 
 class ComplaintPage extends StatefulWidget {
   final Order order;
@@ -541,11 +540,11 @@ class _ComplaintPageState extends State<ComplaintPage> {
             ),
         );
 
-        // After dialog is closed, navigate to refund page
+        // After dialog is closed, navigate back to order detail
         if (!mounted) return;
 
         Navigator.pop(context); // Go back to order detail
-        Navigator.pushNamed(context, AppRoutes.refund);
+        // User will see the complaint status and refund button in order detail
       } catch (e, stackTrace) {
         debugPrint('Error submitting complaint: $e');
         debugPrint('Stack trace: $stackTrace');
