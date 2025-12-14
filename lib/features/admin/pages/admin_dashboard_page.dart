@@ -15,7 +15,7 @@ class AdminDashboardPage extends StatelessWidget {
         backgroundColor: AppColors.primary,
         elevation: 0,
         title: const Text(
-          'Dashboard Admin',
+          'Admin ShopZone',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -23,12 +23,6 @@ class AdminDashboardPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => _showLogoutDialog(context),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -77,7 +71,7 @@ class AdminDashboardPage extends StatelessWidget {
                   _buildMenuCard(
                     context: context,
                     icon: Icons.assignment_return,
-                    title: 'Manage\nRetur & Refund',
+                    title: 'Manage\nRetur',
                     color: Colors.purple,
                     onTap: () {
                       Navigator.pushNamed(context, AppRoutes.adminComplaints);
@@ -85,12 +79,45 @@ class AdminDashboardPage extends StatelessWidget {
                   ),
                   _buildMenuCard(
                     context: context,
-                    icon: Icons.logout,
-                    title: 'Logout',
-                    color: Colors.red,
-                    onTap: () => _showLogoutDialog(context),
+                    icon: Icons.payments,
+                    title: 'Manage\nRefund',
+                    color: Colors.green,
+                    onTap: () {
+                      // TODO: Navigate to admin refunds page
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Halaman Manage Refund sedang dikembangkan'),
+                        ),
+                      );
+                    },
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Logout Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showLogoutDialog(context),
+                icon: const Icon(Icons.logout, size: 20),
+                label: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
               ),
             ),
           ],
