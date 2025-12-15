@@ -1,38 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../shared/providers/order_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import '../../../shared/models/order.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../routes/app_routes.dart';
 
-class OrdersPage extends StatefulWidget {
+class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
   @override
-  State<OrdersPage> createState() => _OrdersPageState();
-}
-
-class _OrdersPageState extends State<OrdersPage> {
-  @override
-  void initState() {
-    super.initState();
-    // Load orders when page opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-      debugPrint('OrdersPage opened - Current user: ${orderProvider.currentUserId}');
-      debugPrint('Current orders count: ${orderProvider.orders.length}');
-      orderProvider.reloadOrders();
-    });
-  }
-
-  Future<void> _refreshOrders() async {
-    final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-    await orderProvider.reloadOrders();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -45,16 +25,74 @@ class _OrdersPageState extends State<OrdersPage> {
         title: const Text('Pesanan Saya', style: AppTextStyles.heading2),
         centerTitle: true,
       ),
-      body: Consumer<OrderProvider>(
-        builder: (context, orderProvider, child) {
-          if (orderProvider.orders.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: _refreshOrders,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height - 100,
-                  child: Center(
+      body: currentUser == null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.login_outlined,
+                    size: 80,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Silakan login terlebih dahulu',
+                    style: AppTextStyles.heading3.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('orders')
+                  .where('userId', isEqualTo: currentUser.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                // Loading state
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Error state
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 80,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Terjadi kesalahan',
+                          style: AppTextStyles.heading3.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            snapshot.error.toString(),
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textHint,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Empty state
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -79,100 +117,180 @@ class _OrdersPageState extends State<OrdersPage> {
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-            );
-          }
+                  );
+                }
 
-          return RefreshIndicator(
-            onRefresh: _refreshOrders,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: orderProvider.orders.length,
-              itemBuilder: (context, index) {
-                final order = orderProvider.orders[index];
-                return _OrderCard(order: order);
+                // Get orders and sort by date (client-side sorting)
+                final orders = snapshot.data!.docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  data['id'] = doc.id;
+                  return Order.fromJson(data);
+                }).toList();
+
+                // Sort by orderDate descending (newest first)
+                orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+
+                // Get order IDs from sorted orders
+                final orderIds = orders.map((order) => order.id).toList();
+
+                // Display orders list
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: orderIds.length,
+                  itemBuilder: (context, index) {
+                    final orderId = orderIds[index];
+                    return _OrderCard(
+                      key: ValueKey(orderId),
+                      orderId: orderId,
+                    );
+                  },
+                );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }
 
-class _OrderCard extends StatelessWidget {
-  final Order order;
+class _OrderCard extends StatefulWidget {
+  final String orderId;
 
-  const _OrderCard({required this.order});
+  const _OrderCard({
+    super.key,
+    required this.orderId,
+  });
+
+  @override
+  State<_OrderCard> createState() => _OrderCardState();
+}
+
+class _OrderCardState extends State<_OrderCard> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint('✅ _OrderCard initState for: ${widget.orderId}');
+  }
+
+  @override
+  void dispose() {
+    debugPrint('🗑️ _OrderCard dispose for: ${widget.orderId}');
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Order ID
-          Text(
-            order.id,
-            style: AppTextStyles.heading3,
-          ),
-          const SizedBox(height: 16),
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
 
-          // Status Timeline
-          _buildStatusTimeline(),
+    debugPrint('🔄 Building _OrderCard for: ${widget.orderId}');
 
-          const SizedBox(height: 20),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('orders')
+          .doc(widget.orderId)
+          .snapshots(includeMetadataChanges: true),
+      builder: (context, snapshot) {
+        // Debug logging
+        if (snapshot.hasData) {
+          final orderData = snapshot.data!.data() as Map<String, dynamic>?;
+          if (orderData != null) {
+            debugPrint('📦 Order ${widget.orderId} status: ${orderData['status']}');
+          }
+        }
 
-          // Detail Pesanan Button
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.orderDetail,
-                  arguments: order,
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Detail Pesanan',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+        // Loading state
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
             ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        // Error or no data
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          debugPrint('❌ Error or no data for order: ${widget.orderId}');
+          return const SizedBox.shrink();
+        }
+
+        // Parse order from snapshot
+        final orderData = snapshot.data!.data() as Map<String, dynamic>;
+        final order = Order.fromJson(orderData);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Order ID
+              Text(
+                order.id,
+                style: AppTextStyles.heading3,
+              ),
+              const SizedBox(height: 16),
+
+              // Status Timeline
+              _buildStatusTimeline(order),
+
+              const SizedBox(height: 20),
+
+              // Detail Pesanan Button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.orderDetail,
+                      arguments: order,
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.border),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Detail Pesanan',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildStatusTimeline() {
+  Widget _buildStatusTimeline(Order order) {
     final statuses = [
       OrderStatus.diproses,
       OrderStatus.dikirim,
@@ -186,7 +304,7 @@ class _OrderCard extends StatelessWidget {
           return Expanded(
             child: Container(
               height: 2,
-              color: _isStatusCompleted(statuses[(index + 1) ~/ 2])
+              color: _isStatusCompleted(order, statuses[(index + 1) ~/ 2])
                   ? AppColors.secondary
                   : AppColors.border,
             ),
@@ -195,14 +313,14 @@ class _OrderCard extends StatelessWidget {
           // Status item
           final statusIndex = index ~/ 2;
           final status = statuses[statusIndex];
-          return _buildStatusItem(status);
+          return _buildStatusItem(order, status);
         }
       }),
     );
   }
 
-  Widget _buildStatusItem(OrderStatus status) {
-    final isCompleted = _isStatusCompleted(status);
+  Widget _buildStatusItem(Order order, OrderStatus status) {
+    final isCompleted = _isStatusCompleted(order, status);
     final isCurrent = order.status == status;
     final timestamp = order.statusTimestamps[status];
 
@@ -273,7 +391,7 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  bool _isStatusCompleted(OrderStatus status) {
+  bool _isStatusCompleted(Order order, OrderStatus status) {
     final statusOrder = [
       OrderStatus.diproses,
       OrderStatus.dikirim,

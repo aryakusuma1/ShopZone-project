@@ -31,7 +31,38 @@ class OrderDetailPage extends StatelessWidget {
         title: const Text('Detail Pesanan', style: AppTextStyles.heading2),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('orders')
+            .doc(order.id)
+            .snapshots(),
+        builder: (context, snapshot) {
+          // Show loading if waiting
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Show error if any
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          // Get updated order data
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text('Pesanan tidak ditemukan'));
+          }
+
+          final orderData = snapshot.data!.data() as Map<String, dynamic>;
+          final currentOrder = Order.fromJson(orderData);
+
+          return _buildOrderContent(context, currentOrder);
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderContent(BuildContext context, Order currentOrder) {
+    return SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -48,14 +79,14 @@ class OrderDetailPage extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Order Items
-                  ...order.items.map((item) => _buildOrderItem(item)),
+                  ...currentOrder.items.map((item) => _buildOrderItem(item)),
 
                   const SizedBox(height: 24),
 
                   // Order Summary
-                  _buildSummaryRow('Harga', order.formattedTotalPrice),
+                  _buildSummaryRow('Harga', currentOrder.formattedTotalPrice),
                   const SizedBox(height: 8),
-                  _buildSummaryRow('Status', order.statusText),
+                  _buildSummaryRow('Status', currentOrder.statusText),
                 ],
               ),
             ),
@@ -66,7 +97,7 @@ class OrderDetailPage extends StatelessWidget {
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('complaints')
-                  .where('orderId', isEqualTo: order.id)
+                  .where('orderId', isEqualTo: currentOrder.id)
                   .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
                   .limit(1)
                   .snapshots(),
@@ -83,7 +114,7 @@ class OrderDetailPage extends StatelessWidget {
                         Navigator.pushNamed(
                           context,
                           AppRoutes.complaint,
-                          arguments: order,
+                          arguments: currentOrder,
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -120,11 +151,52 @@ class OrderDetailPage extends StatelessWidget {
               },
             ),
 
+            // Pesanan Diterima Button - Only show if status is dikirim
+            if (currentOrder.status == OrderStatus.dikirim)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _showConfirmReceivedDialog(context, currentOrder),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.check_circle,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Pesanan Diterima',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            if (currentOrder.status == OrderStatus.dikirim)
+              const SizedBox(height: 16),
+
             // Check if there's an active complaint/return request
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('complaints')
-                  .where('orderId', isEqualTo: order.id)
+                  .where('orderId', isEqualTo: currentOrder.id)
                   .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
                   .limit(1)
                   .snapshots(),
@@ -193,7 +265,7 @@ class OrderDetailPage extends StatelessWidget {
                         StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('refunds')
-                              .where('orderId', isEqualTo: order.id)
+                              .where('orderId', isEqualTo: currentOrder.id)
                               .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
                               .limit(1)
                               .snapshots(),
@@ -240,7 +312,7 @@ class OrderDetailPage extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Jumlah: ${order.formattedFinalPrice}',
+                                            'Jumlah: ${currentOrder.formattedFinalPrice}',
                                             style: AppTextStyles.bodySmall.copyWith(
                                               color: AppColors.textSecondary,
                                             ),
@@ -265,7 +337,7 @@ class OrderDetailPage extends StatelessWidget {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: () {
-                                  _showRefundConfirmation(context, order, complaint);
+                                  _showRefundConfirmation(context, currentOrder, complaint);
                                 },
                                 icon: const Icon(Icons.payments, size: 20),
                                 label: const Text(
@@ -336,7 +408,6 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -537,6 +608,117 @@ class OrderDetailPage extends StatelessWidget {
         return 'Ditolak';
       default:
         return 'Unknown';
+    }
+  }
+
+  // Dialog konfirmasi pesanan diterima
+  void _showConfirmReceivedDialog(BuildContext context, Order order) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green.shade600),
+            const SizedBox(width: 12),
+            const Text('Konfirmasi Penerimaan'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Apakah Anda yakin telah menerima pesanan ini?',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Setelah dikonfirmasi, status pesanan akan berubah menjadi "Diterima".',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateOrderStatus(context, order);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Ya, Sudah Diterima'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Update status pesanan ke Firestore
+  Future<void> _updateOrderStatus(BuildContext context, Order order) async {
+    try {
+      // Create updated statusTimestamps
+      final updatedTimestamps = Map<OrderStatus, DateTime>.from(order.statusTimestamps);
+      updatedTimestamps[OrderStatus.diterima] = DateTime.now();
+
+      // Update order in Firestore
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(order.id)
+          .update({
+        'status': OrderStatus.diterima.index,
+        'statusTimestamps': updatedTimestamps.map(
+          (key, value) => MapEntry(key.index.toString(), value.toIso8601String()),
+        ),
+      });
+
+      if (!context.mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text('Pesanan berhasil dikonfirmasi sebagai diterima'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Navigate back to refresh the list
+      Navigator.pop(context);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(child: Text('Gagal mengubah status: $e')),
+            ],
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
