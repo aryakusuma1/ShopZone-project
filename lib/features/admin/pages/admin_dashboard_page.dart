@@ -74,7 +74,7 @@ class AdminDashboardPage extends StatelessWidget {
                     title: 'Manage\nRetur',
                     color: Colors.purple,
                     onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.adminComplaints);
+                      Navigator.pushNamed(context, AppRoutes.adminRetur);
                     },
                   ),
                   _buildMenuCard(

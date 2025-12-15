@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
+import 'package:intl/intl.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/cart_item.dart';
 import '../../../shared/models/complaint.dart';
@@ -238,11 +239,12 @@ class OrderDetailPage extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Status Retur dari complaint
                                     Text(
-                                      'Status Retur: ${_getComplaintStatusText(complaint.status)}',
+                                      'Status Retur: ${_getReturStatusText(complaint.status)}',
                                       style: AppTextStyles.bodyMedium.copyWith(
                                         fontWeight: FontWeight.w600,
-                                        color: _getComplaintStatusColor(complaint.status),
+                                        color: _getReturStatusColor(complaint.status),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -372,39 +374,64 @@ class OrderDetailPage extends StatelessWidget {
               },
             ),
 
-            // Complaint / Return Process Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Complaint / Return Process',
-                    style: AppTextStyles.heading2,
-                  ),
-                  const SizedBox(height: 16),
+            // Complaint / Return Process Section with Real-time Status
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('complaints')
+                  .where('orderId', isEqualTo: currentOrder.id)
+                  .limit(1)
+                  .snapshots(),
+              builder: (context, complaintSnapshot) {
+                Complaint? complaintData;
+                if (complaintSnapshot.hasData && complaintSnapshot.data!.docs.isNotEmpty) {
+                  final data = complaintSnapshot.data!.docs.first.data() as Map<String, dynamic>;
+                  data['id'] = complaintSnapshot.data!.docs.first.id;
+                  complaintData = Complaint.fromJson(data);
+                }
 
-                  _buildProcessStep(
-                    Icons.description_outlined,
-                    'Ajukan',
-                    'Kirimkan keluhan atau permintaan pengembalian Anda',
-                  ),
-                  const SizedBox(height: 16),
+                // Get status index for comparison (0=ajukan, 1=diproses, 2=selesai)
+                int currentStatusIndex = _getReturStatusIndex(complaintData?.status ?? 'pending');
 
-                  _buildProcessStep(
-                    Icons.schedule,
-                    'Diproses',
-                    'Permintaan Anda sedang diproses oleh tim kami',
-                  ),
-                  const SizedBox(height: 16),
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Complaint / Return Process',
+                        style: AppTextStyles.heading2,
+                      ),
+                      const SizedBox(height: 16),
 
-                  _buildProcessStep(
-                    Icons.check_circle_outline,
-                    'Selesai',
-                    'Keluhan atau pengembalian Anda telah terselesaikan',
+                      _buildProcessStepWithStatus(
+                        Icons.description_outlined,
+                        'Ajukan',
+                        'Kirimkan keluhan atau permintaan pengembalian Anda',
+                        complaintData != null && currentStatusIndex >= 0,
+                        complaintData?.createdAt,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildProcessStepWithStatus(
+                        Icons.schedule,
+                        'Diproses',
+                        'Permintaan Anda sedang diproses oleh tim kami',
+                        complaintData != null && currentStatusIndex >= 1,
+                        currentStatusIndex >= 1 ? complaintData?.createdAt : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildProcessStepWithStatus(
+                        Icons.check_circle_outline,
+                        'Selesai',
+                        'Keluhan atau pengembalian Anda telah terselesaikan',
+                        complaintData != null && currentStatusIndex >= 2,
+                        currentStatusIndex >= 2 ? complaintData?.createdAt : null,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
@@ -497,17 +524,28 @@ class OrderDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProcessStep(IconData icon, String title, String description) {
+  Widget _buildProcessStepWithStatus(
+    IconData icon,
+    String title,
+    String description,
+    bool isActive,
+    DateTime? timestamp,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+            color: isActive ? AppColors.primary.withValues(alpha: 0.1) : AppColors.cardBackground,
             borderRadius: BorderRadius.circular(8),
+            border: isActive ? Border.all(color: AppColors.primary, width: 2) : null,
           ),
-          child: Icon(icon, color: AppColors.primary, size: 24),
+          child: Icon(
+            icon,
+            color: isActive ? AppColors.primary : Colors.grey,
+            size: 24,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -517,16 +555,27 @@ class OrderDetailPage extends StatelessWidget {
               Text(
                 title,
                 style: AppTextStyles.bodyLarge.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                  color: isActive ? AppColors.primary : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 description,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: isActive ? AppColors.textPrimary : AppColors.textSecondary,
                 ),
               ),
+              if (timestamp != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Waktu: ${DateFormat('dd MMM yyyy, HH:mm').format(timestamp)}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textHint,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -538,6 +587,9 @@ class OrderDetailPage extends StatelessWidget {
   Color _getComplaintStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
+        return Colors.blue;
+      case 'processing':
+      case 'processed':
         return Colors.orange;
       case 'approved':
         return Colors.blue;
@@ -553,7 +605,10 @@ class OrderDetailPage extends StatelessWidget {
   IconData _getComplaintStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return Icons.schedule;
+        return Icons.description;
+      case 'processing':
+      case 'processed':
+        return Icons.access_time;
       case 'approved':
         return Icons.check_circle_outline;
       case 'resolved':
@@ -562,21 +617,6 @@ class OrderDetailPage extends StatelessWidget {
         return Icons.cancel_outlined;
       default:
         return Icons.help_outline;
-    }
-  }
-
-  String _getComplaintStatusText(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Menunggu Review';
-      case 'approved':
-        return 'Disetujui - Bisa Refund';
-      case 'resolved':
-        return 'Selesai';
-      case 'rejected':
-        return 'Ditolak';
-      default:
-        return 'Unknown';
     }
   }
 
@@ -608,6 +648,47 @@ class OrderDetailPage extends StatelessWidget {
         return 'Ditolak';
       default:
         return 'Unknown';
+    }
+  }
+
+  // Helper methods for Retur Status (from Complaint)
+  String _getReturStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'processing':
+      case 'processed':
+        return 'Diproses';
+      case 'resolved':
+        return 'Selesai';
+      case 'pending':
+      default:
+        return 'Ajukan';
+    }
+  }
+
+  Color _getReturStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'processing':
+      case 'processed':
+        return Colors.orange;
+      case 'resolved':
+        return Colors.green;
+      case 'pending':
+      default:
+        return Colors.blue;
+    }
+  }
+
+  // Get status index for timeline comparison
+  int _getReturStatusIndex(String status) {
+    switch (status.toLowerCase()) {
+      case 'processing':
+      case 'processed':
+        return 1; // Diproses
+      case 'resolved':
+        return 2; // Selesai
+      case 'pending':
+      default:
+        return 0; // Ajukan
     }
   }
 
@@ -799,14 +880,16 @@ class _RefundConfirmationDialogState extends State<_RefundConfirmationDialog> {
       final refundId = FirebaseFirestore.instance.collection('refunds').doc().id;
 
       // Create refund object
+      final now = DateTime.now();
       final refund = Refund(
         id: refundId,
         complaintId: widget.complaint.id,
         orderId: widget.order.id,
         userId: user.uid,
         refundAmount: widget.order.finalPrice,
-        refundStatus: 'requested',
-        createdAt: DateTime.now(),
+        status: RefundStatus.ajukan,
+        createdAt: now,
+        statusTimestamps: {RefundStatus.ajukan: now},
       );
 
       // Save to Firestore

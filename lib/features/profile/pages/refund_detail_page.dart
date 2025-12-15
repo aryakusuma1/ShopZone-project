@@ -239,25 +239,28 @@ class RefundDetailPage extends StatelessWidget {
     if (isRejected) {
       timeline.add({
         'message': 'Permintaan refund ditolak oleh admin',
-        'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 4)),
+        'timestamp': refund.statusTimestamps[RefundStatus.diproses] ??
+                     refund.createdAt.add(const Duration(hours: 4)),
         'isRejected': true,
       });
     } else {
-      // Add processing if status is processing or completed
-      if (refund.refundStatus.toLowerCase() == 'processing' ||
-          refund.refundStatus.toLowerCase() == 'completed') {
+      // Add processing if status is diproses or selesai
+      if (refund.status == RefundStatus.diproses ||
+          refund.status == RefundStatus.selesai) {
         timeline.add({
           'message': 'Refund sedang diproses',
-          'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 2)),
+          'timestamp': refund.statusTimestamps[RefundStatus.diproses] ??
+                       refund.createdAt.add(const Duration(hours: 2)),
           'isRejected': false,
         });
       }
 
-      // Add completed if status is completed
-      if (refund.refundStatus.toLowerCase() == 'completed') {
+      // Add completed if status is selesai
+      if (refund.status == RefundStatus.selesai) {
         timeline.add({
           'message': 'Dana telah dikembalikan',
-          'timestamp': refund.completedAt ?? refund.createdAt.add(const Duration(days: 1)),
+          'timestamp': refund.statusTimestamps[RefundStatus.selesai] ??
+                       refund.createdAt.add(const Duration(days: 1)),
           'isRejected': false,
         });
       }
