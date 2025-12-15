@@ -22,6 +22,7 @@ import '../features/profile/pages/help_page.dart';
 import '../features/admin/pages/admin_dashboard_page.dart';
 import '../features/admin/pages/admin_products_page.dart';
 import '../features/admin/pages/admin_add_edit_product_page.dart';
+import '../features/admin/pages/admin_manage_refund_page.dart';
 import '../features/admin/pages/admin_migrate_products_page.dart';
 import '../shared/models/product.dart';
 import '../shared/models/order.dart';
@@ -123,6 +124,9 @@ class RouteGenerator {
           builder: (_) => const AdminAddEditProductPage(),
           settings: settings,
         );
+      
+      case AppRoutes.adminRefunds:
+        return MaterialPageRoute(builder: (_) => const AdminManageRefundPage());
 
       case AppRoutes.adminMigrateProducts:
         return MaterialPageRoute(builder: (_) => const AdminMigrateProductsPage());

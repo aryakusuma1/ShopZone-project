@@ -83,12 +83,7 @@ class AdminDashboardPage extends StatelessWidget {
                     title: 'Manage\nRefund',
                     color: Colors.green,
                     onTap: () {
-                      // TODO: Navigate to admin refunds page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Halaman Manage Refund sedang dikembangkan'),
-                        ),
-                      );
+                      Navigator.pushNamed(context, AppRoutes.adminRefunds);
                     },
                   ),
                 ],
