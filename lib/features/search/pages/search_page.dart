@@ -15,16 +15,15 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _suggestions = [];
-  List<Product> _allProducts = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     if (widget.initialQuery != null) {
       _searchController.text = widget.initialQuery!;
+      _searchQuery = widget.initialQuery!;
     }
-    _onSearchChanged(_searchController.text);
   }
 
   @override
@@ -35,15 +34,18 @@ class _SearchPageState extends State<SearchPage> {
 
   void _onSearchChanged(String query) {
     setState(() {
-      if (query.isNotEmpty) {
-        _suggestions = _allProducts
-            .where((product) =>
-                product.name.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      } else {
-        _suggestions = [];
-      }
+      _searchQuery = query;
     });
+  }
+
+  List<Product> _filterProducts(List<Product> allProducts) {
+    if (_searchQuery.isEmpty) {
+      return [];
+    }
+    return allProducts
+        .where((product) =>
+            product.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
   }
 
   @override
@@ -91,7 +93,7 @@ class _SearchPageState extends State<SearchPage> {
                   Icons.search,
                   color: AppColors.textSecondary,
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
+                suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(
                           Icons.clear,
@@ -122,13 +124,15 @@ class _SearchPageState extends State<SearchPage> {
             return const Center(child: Text('No products found.'));
           }
 
-          _allProducts = snapshot.data!.docs.map((doc) {
+          final allProducts = snapshot.data!.docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
             data['id'] = doc.id; // Include document ID in the data
             return Product.fromJson(data);
           }).toList();
 
-          return _suggestions.isNotEmpty
+          final suggestions = _filterProducts(allProducts);
+
+          return suggestions.isNotEmpty
               ? Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
@@ -139,9 +143,9 @@ class _SearchPageState extends State<SearchPage> {
                       const SizedBox(height: 8),
                       Expanded(
                         child: ListView.builder(
-                          itemCount: _suggestions.length,
+                          itemCount: suggestions.length,
                           itemBuilder: (context, index) {
-                            final product = _suggestions[index];
+                            final product = suggestions[index];
                             return ListTile(
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
