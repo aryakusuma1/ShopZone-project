@@ -18,7 +18,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   String _selectedSortTab = 'Terlaris';
   String? _selectedCondition;
   String? _selectedRating;
-  List<Product> _displayedProducts = [];
 
   @override
   void didChangeDependencies() {
@@ -184,11 +183,11 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
                           child: Text("Kategori"),
                         ),
                         const DropdownMenuItem<String>(
-                          value: 'Baru',
+                          value: 'baru',
                           child: Text('Baru'),
                         ),
                         const DropdownMenuItem<String>(
-                          value: 'Bekas',
+                          value: 'bekas',
                           child: Text('Bekas'),
                         ),
                       ],
@@ -243,72 +242,79 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _buildProductQuery().snapshots(),
               builder: (context, snapshot) {
-                // Show loading indicator at the top while preserving old data
-                final isLoading = snapshot.connectionState == ConnectionState.waiting;
-
-                if (snapshot.hasData) {
-                  // New data is available, update the displayed products
-                  final products = snapshot.data!.docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    data['id'] = doc.id;
-                    return Product.fromJson(data);
-                  }).toList();
-
-                  // Apply client-side search filtering
-                  final searchQuery = _searchController.text.toLowerCase();
-                  if (searchQuery.isNotEmpty) {
-                    _displayedProducts = products.where((product) {
-                      return product.name.toLowerCase().contains(searchQuery);
-                    }).toList();
-                  } else {
-                    _displayedProducts = products;
-                  }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (snapshot.hasError) {
                   return Center(
                     child: Text('Terjadi Error: ${snapshot.error}'),
                   );
                 }
 
-                return Column(
-                  children: [
-                    // Non-intrusive loading indicator
-                    if (isLoading) const LinearProgressIndicator(minHeight: 2),
-                    Expanded(
-                      child: _displayedProducts.isEmpty
-                          ? Center(
-                              child: isLoading
-                                  ? const CircularProgressIndicator()
-                                  : const Text('Tidak ada produk yang cocok.'),
-                            )
-                          : Container(
-                              color: AppColors.background,
-                              child: GridView.builder(
-                                padding: const EdgeInsets.all(16),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 0.65,
-                                ),
-                                itemCount: _displayedProducts.length,
-                                itemBuilder: (context, index) {
-                                  final product = _displayedProducts[index];
-                                  return ProductCard(
-                                    product: product,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.productDetail,
-                                      arguments: product,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('Tidak ada produk yang cocok.'));
+                }
+
+                // Get products from server
+                List<Product> products = snapshot.data!.docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  data['id'] = doc.id;
+                  return Product.fromJson(data);
+                }).toList();
+
+                // Apply client-side rating filtering
+                if (_selectedRating != null) {
+                  final minRating = double.tryParse(_selectedRating!);
+                  if (minRating != null) {
+                    // Corrected logic: filter for ratings within the integer range
+                    // e.g., for 4 stars, filter >= 4.0 and < 5.0
+                    products = products
+                        .where((product) =>
+                            product.rating >= minRating &&
+                            product.rating < (minRating + 1))
+                        .toList();
+                  }
+                }
+
+                // Apply client-side search text filtering
+                final searchQuery = _searchController.text.toLowerCase();
+                if (searchQuery.isNotEmpty) {
+                  products = products
+                      .where((product) =>
+                          product.name.toLowerCase().contains(searchQuery))
+                      .toList();
+                }
+
+                if (products.isEmpty) {
+                  return const Center(
+                      child: Text('Tidak ada produk yang cocok dengan filter Anda.'));
+                }
+
+                return Container(
+                  color: AppColors.background,
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.65,
                     ),
-                  ],
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      return ProductCard(
+                        product: product,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.productDetail,
+                          arguments: product,
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
@@ -342,15 +348,6 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     // Condition filter
     if (_selectedCondition != null) {
       query = query.where('condition', isEqualTo: _selectedCondition);
-    }
-
-    // Rating filter - Note: Firestore doesn't support inequality on multiple fields well.
-    // This part might need client-side filtering if combined with other range filters.
-    if (_selectedRating != null) {
-      final minRating = double.tryParse(_selectedRating!);
-      if (minRating != null) {
-        query = query.where('rating', isGreaterThanOrEqualTo: minRating);
-      }
     }
 
     return query;

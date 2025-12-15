@@ -6,7 +6,10 @@ class RefundService {
       FirebaseFirestore.instance.collection('refunds');
 
   Stream<List<Refund>> getRefunds() {
-    return _refundsCollection.snapshots().map((snapshot) {
+    return _refundsCollection
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
