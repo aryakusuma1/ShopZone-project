@@ -67,6 +67,46 @@ class _ComplaintPageState extends State<ComplaintPage> {
     _descriptionController.addListener(() {
       setState(() {});
     });
+    // Check if complaint already exists for this order
+    _checkExistingComplaint();
+  }
+
+  Future<void> _checkExistingComplaint() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final existingComplaint = await _firestore
+          .collection('complaints')
+          .where('orderId', isEqualTo: widget.order.id)
+          .where('userId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+
+      if (existingComplaint.docs.isNotEmpty && mounted) {
+        // Complaint already exists, show message and go back
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text('Anda sudah pernah mengajukan komplain untuk pesanan ini.'),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          Navigator.pop(context);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking existing complaint: $e');
+    }
   }
 
   @override
