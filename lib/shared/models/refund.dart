@@ -1,15 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum RefundStatus {
+  ajukan,    // requested - 0
+  diproses,  // processing - 1
+  selesai,   // completed - 2
+}
+
 class Refund {
   final String id;
   final String complaintId;
   final String orderId;
   final String userId;
   final int refundAmount;
-  final String refundStatus;
+  final RefundStatus status;
   final DateTime createdAt;
-  final DateTime? processedAt;
-  final DateTime? completedAt;
+  final Map<RefundStatus, DateTime> statusTimestamps;
 
   Refund({
     required this.id,
@@ -17,27 +22,61 @@ class Refund {
     required this.orderId,
     required this.userId,
     required this.refundAmount,
-    required this.refundStatus,
+    required this.status,
     required this.createdAt,
-    this.processedAt,
-    this.completedAt,
-  });
+    Map<RefundStatus, DateTime>? statusTimestamps,
+  }) : statusTimestamps = statusTimestamps ?? {};
 
   factory Refund.fromJson(Map<String, dynamic> json) {
+    // Parse status from old string format or new index format
+    RefundStatus parsedStatus = RefundStatus.ajukan;
+    if (json['refundStatus'] is int) {
+      parsedStatus = RefundStatus.values[json['refundStatus']];
+    } else if (json['refundStatus'] is String) {
+      final statusStr = json['refundStatus'].toString().toLowerCase();
+      if (statusStr == 'processing' || statusStr == 'diproses') {
+        parsedStatus = RefundStatus.diproses;
+      } else if (statusStr == 'completed' || statusStr == 'selesai') {
+        parsedStatus = RefundStatus.selesai;
+      } else {
+        parsedStatus = RefundStatus.ajukan;
+      }
+    }
+
+    // Parse statusTimestamps
+    Map<RefundStatus, DateTime> timestamps = {};
+    if (json['statusTimestamps'] != null) {
+      final timestampsData = json['statusTimestamps'] as Map<String, dynamic>;
+      timestampsData.forEach((key, value) {
+        final statusIndex = int.parse(key);
+        final status = RefundStatus.values[statusIndex];
+        // Handle both Timestamp and String formats for backward compatibility
+        if (value is Timestamp) {
+          timestamps[status] = value.toDate();
+        } else if (value is String) {
+          timestamps[status] = DateTime.parse(value);
+        }
+      });
+    } else {
+      // Backward compatibility: create timestamps from old fields
+      timestamps[RefundStatus.ajukan] = (json['createdAt'] as Timestamp).toDate();
+      if (json['processedAt'] != null) {
+        timestamps[RefundStatus.diproses] = (json['processedAt'] as Timestamp).toDate();
+      }
+      if (json['completedAt'] != null) {
+        timestamps[RefundStatus.selesai] = (json['completedAt'] as Timestamp).toDate();
+      }
+    }
+
     return Refund(
       id: json['id'] ?? '',
       complaintId: json['complaintId'] ?? '',
       orderId: json['orderId'] ?? '',
       userId: json['userId'] ?? '',
       refundAmount: json['refundAmount'] ?? 0,
-      refundStatus: json['refundStatus'] ?? 'requested',
+      status: parsedStatus,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
-      processedAt: json['processedAt'] != null
-          ? (json['processedAt'] as Timestamp).toDate()
-          : null,
-      completedAt: json['completedAt'] != null
-          ? (json['completedAt'] as Timestamp).toDate()
-          : null,
+      statusTimestamps: timestamps,
     );
   }
 
@@ -47,14 +86,15 @@ class Refund {
       'orderId': orderId,
       'userId': userId,
       'refundAmount': refundAmount,
-      'refundStatus': refundStatus,
-      'createdAt': createdAt,
-      'processedAt': processedAt,
-      'completedAt': completedAt,
+      'refundStatus': status.index,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'statusTimestamps': statusTimestamps.map(
+        (key, value) => MapEntry(key.index.toString(), Timestamp.fromDate(value)),
+      ),
     };
   }
 
-    String get formattedRefundAmount {
+  String get formattedRefundAmount {
     return 'Rp${refundAmount.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]}.',
@@ -62,17 +102,25 @@ class Refund {
   }
 
   String get statusText {
-    switch (refundStatus.toLowerCase()) {
-      case 'requested':
-        return 'Diajukan';
-      case 'processing':
+    switch (status) {
+      case RefundStatus.ajukan:
+        return 'Ajukan';
+      case RefundStatus.diproses:
         return 'Diproses';
-      case 'completed':
+      case RefundStatus.selesai:
         return 'Selesai';
-      case 'rejected':
-        return 'Ditolak';
-      default:
-        return 'Unknown';
+    }
+  }
+
+  // For backward compatibility with old refundStatus string
+  String get refundStatus {
+    switch (status) {
+      case RefundStatus.ajukan:
+        return 'requested';
+      case RefundStatus.diproses:
+        return 'processing';
+      case RefundStatus.selesai:
+        return 'completed';
     }
   }
 }

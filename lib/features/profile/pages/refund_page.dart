@@ -156,11 +156,11 @@ class _RefundCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'requested':
-        return AppColors.warning;
-      case 'processing':
         return Colors.blue;
+      case 'processing':
+        return Colors.orange;
       case 'completed':
-        return AppColors.success;
+        return Colors.green;
       case 'rejected':
         return AppColors.error;
       default:
