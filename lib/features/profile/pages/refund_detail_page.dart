@@ -20,6 +20,8 @@ class RefundDetailPage extends StatelessWidget {
         return 1; // Diproses
       case 'completed':
         return 2; // Selesai
+      case 'rejected':
+        return -1; // Ditolak (special case)
       default:
         return 0;
     }
@@ -33,15 +35,22 @@ class RefundDetailPage extends StatelessWidget {
         return 'Perkiraan selesai 1 hari lagi';
       case 'completed':
         return 'Refund telah selesai';
+      case 'rejected':
+        return 'Permintaan refund ditolak';
       default:
         return 'Perkiraan selesai 2-3 hari lagi';
     }
+  }
+
+  bool _isRejected(String status) {
+    return status.toLowerCase() == 'rejected';
   }
 
   @override
   Widget build(BuildContext context) {
     final currentStep = _getCurrentStep(refund.refundStatus);
     final dateFormatter = DateFormat('dd-MM-yyyy, HH:mm');
+    final isRejected = _isRejected(refund.refundStatus);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -64,8 +73,11 @@ class RefundDetailPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress Stepper
-              _buildProgressStepper(currentStep),
+              // Show rejected status card OR progress stepper
+              if (isRejected)
+                _buildRejectedStatusCard()
+              else
+                _buildProgressStepper(currentStep),
               const SizedBox(height: 12),
 
               // Estimasi selesai
@@ -73,7 +85,8 @@ class RefundDetailPage extends StatelessWidget {
                 child: Text(
                   _getEstimatedCompletion(refund.refundStatus),
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isRejected ? AppColors.error : AppColors.textSecondary,
+                    fontWeight: isRejected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -91,6 +104,58 @@ class RefundDetailPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRejectedStatusCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.error,
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Refund Ditolak',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Permintaan pengembalian dana Anda telah ditolak',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -161,28 +226,41 @@ class RefundDetailPage extends StatelessWidget {
   Widget _buildTimeline(Refund refund, DateFormat dateFormatter) {
     // Create timeline based on status
     final List<Map<String, dynamic>> timeline = [];
+    final isRejected = _isRejected(refund.refundStatus);
 
     // Always add initial submission
     timeline.add({
       'message': 'Permintaan refund diajukan',
       'timestamp': refund.createdAt,
+      'isRejected': false,
     });
 
-    // Add processing if status is processing or completed
-    if (refund.refundStatus.toLowerCase() == 'processing' ||
-        refund.refundStatus.toLowerCase() == 'completed') {
+    // If rejected, add rejection message
+    if (isRejected) {
       timeline.add({
-        'message': 'Refund sedang diproses',
-        'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 2)),
+        'message': 'Permintaan refund ditolak oleh admin',
+        'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 4)),
+        'isRejected': true,
       });
-    }
+    } else {
+      // Add processing if status is processing or completed
+      if (refund.refundStatus.toLowerCase() == 'processing' ||
+          refund.refundStatus.toLowerCase() == 'completed') {
+        timeline.add({
+          'message': 'Refund sedang diproses',
+          'timestamp': refund.processedAt ?? refund.createdAt.add(const Duration(hours: 2)),
+          'isRejected': false,
+        });
+      }
 
-    // Add completed if status is completed
-    if (refund.refundStatus.toLowerCase() == 'completed') {
-      timeline.add({
-        'message': 'Dana telah dikembalikan',
-        'timestamp': refund.completedAt ?? refund.createdAt.add(const Duration(days: 1)),
-      });
+      // Add completed if status is completed
+      if (refund.refundStatus.toLowerCase() == 'completed') {
+        timeline.add({
+          'message': 'Dana telah dikembalikan',
+          'timestamp': refund.completedAt ?? refund.createdAt.add(const Duration(days: 1)),
+          'isRejected': false,
+        });
+      }
     }
 
     return Column(
@@ -194,6 +272,7 @@ class RefundDetailPage extends StatelessWidget {
           message: item['message'],
           timestamp: dateFormatter.format(item['timestamp']),
           isLast: isLast,
+          isRejected: item['isRejected'] ?? false,
         );
       }),
     );
@@ -203,7 +282,14 @@ class RefundDetailPage extends StatelessWidget {
     required String message,
     required String timestamp,
     required bool isLast,
+    required bool isRejected,
   }) {
+    final iconColor = isRejected ? AppColors.error : AppColors.primary;
+    final iconBackgroundColor = isRejected
+        ? AppColors.error.withValues(alpha: 0.1)
+        : AppColors.primary.withValues(alpha: 0.1);
+    final icon = isRejected ? Icons.close : Icons.notifications_outlined;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,12 +302,12 @@ class RefundDetailPage extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: iconBackgroundColor,
                 ),
-                child: const Icon(
-                  Icons.notifications_outlined,
+                child: Icon(
+                  icon,
                   size: 20,
-                  color: AppColors.primary,
+                  color: iconColor,
                 ),
               ),
               if (!isLast)
@@ -229,7 +315,7 @@ class RefundDetailPage extends StatelessWidget {
                   child: Container(
                     width: 2,
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    color: Colors.grey[300],
+                    color: isRejected ? AppColors.error.withValues(alpha: 0.3) : Colors.grey[300],
                   ),
                 ),
             ],
@@ -246,6 +332,7 @@ class RefundDetailPage extends StatelessWidget {
                     message,
                     style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w600,
+                      color: isRejected ? AppColors.error : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
