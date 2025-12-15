@@ -62,37 +62,62 @@ class OrderDetailPage extends StatelessWidget {
 
             const Divider(height: 1),
 
-            // Komplain / Retur Button
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.complaint,
-                      arguments: order,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+            // Komplain / Retur Button - Only show if no complaint exists
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('complaints')
+                  .where('orderId', isEqualTo: order.id)
+                  .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                  .limit(1)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                // Check if complaint already exists
+                final hasComplaint = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: hasComplaint ? null : () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.complaint,
+                          arguments: order,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasComplaint ? Colors.grey : const Color(0xFFE53935),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                        disabledBackgroundColor: Colors.grey[400],
+                        disabledForegroundColor: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            hasComplaint ? Icons.check_circle : Icons.report_problem,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            hasComplaint ? 'Komplain Sudah Diajukan' : 'Komplain / Retur',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    'Komplain / Retur',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
+                );
+              },
             ),
 
             // Check if there's an active complaint/return request
@@ -164,32 +189,104 @@ class OrderDetailPage extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        // Tombol Ajukan Refund
-                        // TODO: Nanti ubah jadi muncul hanya jika status approved setelah fitur admin selesai
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              _showRefundConfirmation(context, order, complaint);
-                            },
-                            icon: const Icon(Icons.payments, size: 20),
-                            label: const Text(
-                              'Ajukan Pengembalian Dana',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                        // Tombol Ajukan Refund - Only show if no refund exists
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('refunds')
+                              .where('orderId', isEqualTo: order.id)
+                              .where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid ?? '')
+                              .limit(1)
+                              .snapshots(),
+                          builder: (context, refundSnapshot) {
+                            // Check if refund already exists
+                            final hasRefund = refundSnapshot.hasData &&
+                                refundSnapshot.data!.docs.isNotEmpty;
+
+                            if (hasRefund) {
+                              // Show refund status instead of button
+                              final refundDoc = refundSnapshot.data!.docs.first;
+                              final refund = Refund.fromJson(
+                                refundDoc.data() as Map<String, dynamic>
+                              );
+
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: _getRefundStatusColor(refund.refundStatus).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _getRefundStatusColor(refund.refundStatus),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.payments,
+                                      color: _getRefundStatusColor(refund.refundStatus),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Status Refund: ${_getRefundStatusText(refund.refundStatus)}',
+                                            style: AppTextStyles.bodyMedium.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: _getRefundStatusColor(refund.refundStatus),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Jumlah: ${order.formattedFinalPrice}',
+                                            style: AppTextStyles.bodySmall.copyWith(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.arrow_forward_ios, size: 16),
+                                      color: _getRefundStatusColor(refund.refundStatus),
+                                      onPressed: () {
+                                        Navigator.pushNamed(context, AppRoutes.refund);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            // Show button only if no refund exists
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showRefundConfirmation(context, order, complaint);
+                                },
+                                icon: const Icon(Icons.payments, size: 20),
+                                label: const Text(
+                                  'Ajukan Pengembalian Dana',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  elevation: 0,
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 16),
@@ -412,6 +509,37 @@ class OrderDetailPage extends StatelessWidget {
     }
   }
 
+  // Helper methods untuk refund status
+  Color _getRefundStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'requested':
+        return Colors.orange;
+      case 'processing':
+        return Colors.blue;
+      case 'completed':
+        return Colors.green;
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getRefundStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'requested':
+        return 'Menunggu Proses';
+      case 'processing':
+        return 'Sedang Diproses';
+      case 'completed':
+        return 'Selesai';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return 'Unknown';
+    }
+  }
+
   // Dialog konfirmasi refund
   void _showRefundConfirmation(BuildContext context, Order order, Complaint complaint) {
     showDialog(
@@ -450,6 +578,39 @@ class _RefundConfirmationDialogState extends State<_RefundConfirmationDialog> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception('User not logged in');
+      }
+
+      // Check if refund already exists for this order
+      final existingRefund = await FirebaseFirestore.instance
+          .collection('refunds')
+          .where('orderId', isEqualTo: widget.order.id)
+          .where('userId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+
+      if (existingRefund.docs.isNotEmpty) {
+        if (!mounted) return;
+
+        // Close dialog
+        Navigator.pop(context);
+
+        // Show message that refund already exists
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('Anda sudah pernah mengajukan refund untuk pesanan ini.'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
       }
 
       // Generate refund ID

@@ -4,7 +4,6 @@ import 'package:shopzone/core/constants/colors.dart';
 import 'package:shopzone/core/constants/text_styles.dart';
 import 'package:shopzone/routes/app_routes.dart';
 import 'package:shopzone/shared/models/product.dart';
-import 'package:shopzone/shared/widgets/product_card.dart';
 
 class SearchPage extends StatefulWidget {
   final String? initialQuery;
@@ -61,16 +60,15 @@ class _SearchPageState extends State<SearchPage> {
           },
         ),
         titleSpacing: 0,
-        title: Container( // Changed from Expanded to Container
-          child: Container(
-            height: 40,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: TextFormField(
+        title: Container(
+          height: 40,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: TextFormField(
               controller: _searchController,
               autofocus: true,
               onChanged: _onSearchChanged,
@@ -109,7 +107,6 @@ class _SearchPageState extends State<SearchPage> {
                 contentPadding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
               ),
             ),
-          ),
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -146,13 +143,54 @@ class _SearchPageState extends State<SearchPage> {
                           itemBuilder: (context, index) {
                             final product = _suggestions[index];
                             return ListTile(
-                              leading: const Icon(
-                                Icons.search,
-                                color: AppColors.textSecondary,
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: product.imageUrl.startsWith('http')
+                                    ? Image.network(
+                                        product.imageUrl,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 50,
+                                            height: 50,
+                                            color: Colors.grey[300],
+                                            child: const Icon(
+                                              Icons.image,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                        },
+                                      )
+                                    : Image.asset(
+                                        product.imageUrl,
+                                        width: 50,
+                                        height: 50,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 50,
+                                            height: 50,
+                                            color: Colors.grey[300],
+                                            child: const Icon(
+                                              Icons.image,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
                               title: Text(
                                 product.name,
                                 style: AppTextStyles.bodyMedium,
+                              ),
+                              subtitle: Text(
+                                product.formattedPrice,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               onTap: () {
                                 Navigator.pushReplacementNamed(
