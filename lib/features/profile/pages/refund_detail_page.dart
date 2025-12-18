@@ -12,45 +12,41 @@ class RefundDetailPage extends StatelessWidget {
     required this.refund,
   });
 
-  int _getCurrentStep(String status) {
-    switch (status.toLowerCase()) {
-      case 'requested':
+  int _getCurrentStep(RefundStatus status) {
+    switch (status) {
+      case RefundStatus.ajukan:
         return 0; // Diajukan
-      case 'processing':
+      case RefundStatus.diproses:
         return 1; // Diproses
-      case 'completed':
+      case RefundStatus.selesai:
         return 2; // Selesai
-      case 'rejected':
+      case RefundStatus.ditolak:
         return -1; // Ditolak (special case)
-      default:
-        return 0;
     }
   }
 
-  String _getEstimatedCompletion(String status) {
-    switch (status.toLowerCase()) {
-      case 'requested':
+  String _getEstimatedCompletion(RefundStatus status) {
+    switch (status) {
+      case RefundStatus.ajukan:
         return 'Perkiraan selesai 2-3 hari lagi';
-      case 'processing':
+      case RefundStatus.diproses:
         return 'Perkiraan selesai 1 hari lagi';
-      case 'completed':
+      case RefundStatus.selesai:
         return 'Refund telah selesai';
-      case 'rejected':
+      case RefundStatus.ditolak:
         return 'Permintaan refund ditolak';
-      default:
-        return 'Perkiraan selesai 2-3 hari lagi';
     }
   }
 
-  bool _isRejected(String status) {
-    return status.toLowerCase() == 'rejected';
+  bool _isRejected(RefundStatus status) {
+    return status == RefundStatus.ditolak;
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentStep = _getCurrentStep(refund.refundStatus);
+    final currentStep = _getCurrentStep(refund.status);
     final dateFormatter = DateFormat('dd-MM-yyyy, HH:mm');
-    final isRejected = _isRejected(refund.refundStatus);
+    final isRejected = _isRejected(refund.status);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -83,7 +79,7 @@ class RefundDetailPage extends StatelessWidget {
               // Estimasi selesai
               Center(
                 child: Text(
-                  _getEstimatedCompletion(refund.refundStatus),
+                  _getEstimatedCompletion(refund.status),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: isRejected ? AppColors.error : AppColors.textSecondary,
                     fontWeight: isRejected ? FontWeight.w600 : FontWeight.normal,
@@ -226,7 +222,7 @@ class RefundDetailPage extends StatelessWidget {
   Widget _buildTimeline(Refund refund, DateFormat dateFormatter) {
     // Create timeline based on status
     final List<Map<String, dynamic>> timeline = [];
-    final isRejected = _isRejected(refund.refundStatus);
+    final isRejected = _isRejected(refund.status);
 
     // Always add initial submission
     timeline.add({
@@ -239,7 +235,7 @@ class RefundDetailPage extends StatelessWidget {
     if (isRejected) {
       timeline.add({
         'message': 'Permintaan refund ditolak oleh admin',
-        'timestamp': refund.statusTimestamps[RefundStatus.diproses] ??
+        'timestamp': refund.statusTimestamps[RefundStatus.ditolak] ??
                      refund.createdAt.add(const Duration(hours: 4)),
         'isRejected': true,
       });

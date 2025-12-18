@@ -4,6 +4,7 @@ enum RefundStatus {
   ajukan,    // requested - 0
   diproses,  // processing - 1
   selesai,   // completed - 2
+  ditolak,   // rejected - 3
 }
 
 class Refund {
@@ -38,6 +39,8 @@ class Refund {
         parsedStatus = RefundStatus.diproses;
       } else if (statusStr == 'completed' || statusStr == 'selesai') {
         parsedStatus = RefundStatus.selesai;
+      } else if (statusStr == 'rejected' || statusStr == 'ditolak') {
+        parsedStatus = RefundStatus.ditolak;
       } else {
         parsedStatus = RefundStatus.ajukan;
       }
@@ -109,6 +112,8 @@ class Refund {
         return 'Diproses';
       case RefundStatus.selesai:
         return 'Selesai';
+      case RefundStatus.ditolak:
+        return 'Ditolak';
     }
   }
 
@@ -121,6 +126,8 @@ class Refund {
         return 'processing';
       case RefundStatus.selesai:
         return 'completed';
+      case RefundStatus.ditolak:
+        return 'rejected';
     }
   }
 }
