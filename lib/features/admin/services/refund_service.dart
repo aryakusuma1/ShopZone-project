@@ -19,6 +19,25 @@ class RefundService {
   }
 
   Future<void> updateRefundStatus(String id, String newStatus) {
-    return _refundsCollection.doc(id).update({'refundStatus': newStatus});
+    final updates = <String, dynamic>{'refundStatus': newStatus};
+
+    // Update status timestamps when status changes
+    final now = Timestamp.now();
+    switch (newStatus.toLowerCase()) {
+      case 'processing':
+      case 'diproses':
+        updates['statusTimestamps.1'] = now; // RefundStatus.diproses index = 1
+        break;
+      case 'completed':
+      case 'selesai':
+        updates['statusTimestamps.2'] = now; // RefundStatus.selesai index = 2
+        break;
+      case 'rejected':
+      case 'ditolak':
+        updates['statusTimestamps.3'] = now; // RefundStatus.ditolak index = 3
+        break;
+    }
+
+    return _refundsCollection.doc(id).update(updates);
   }
 }
