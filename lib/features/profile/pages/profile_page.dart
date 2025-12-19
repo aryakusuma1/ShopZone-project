@@ -4,6 +4,7 @@ import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/services/auth_service.dart';
+import '../../../core/services/notification_settings_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,7 +15,24 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final AuthService _authService = AuthService();
+  final NotificationSettingsService _notificationSettings =
+      NotificationSettingsService();
   bool _notificationEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationSetting();
+  }
+
+  Future<void> _loadNotificationSetting() async {
+    final enabled = await _notificationSettings.isNotificationEnabled();
+    if (mounted) {
+      setState(() {
+        _notificationEnabled = enabled;
+      });
+    }
+  }
 
   User? get currentUser => FirebaseAuth.instance.currentUser;
 
@@ -143,11 +161,27 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: Icons.notifications_outlined,
                 title: 'Notifikasi',
                 value: _notificationEnabled,
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() {
                     _notificationEnabled = value;
                   });
-                  // TODO: Save notification preference
+                  // Save notification preference
+                  await _notificationSettings.setNotificationEnabled(value);
+
+                  // Show feedback to user
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          value
+                              ? 'Notifikasi diaktifkan'
+                              : 'Notifikasi dinonaktifkan',
+                        ),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: value ? Colors.green : Colors.grey,
+                      ),
+                    );
+                  }
                 },
               ),
               const SizedBox(height: 12),

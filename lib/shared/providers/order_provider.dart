@@ -4,10 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'dart:math';
 import '../models/order.dart';
 import '../models/cart_item.dart';
+import '../../core/services/notification_service.dart';
 
 class OrderProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
 
   final List<Order> _orders = [];
   String? _currentUserId;
@@ -122,6 +124,9 @@ class OrderProvider extends ChangeNotifier {
     notifyListeners();
     _commitOrderCreation(order);
 
+    // Tampilkan notifikasi pesanan berhasil dibuat
+    await _notificationService.showOrderCreatedNotification(orderId: orderId);
+
     return orderId;
   }
 
@@ -135,7 +140,7 @@ class OrderProvider extends ChangeNotifier {
   }
 
   // Update status pesanan
-  void updateOrderStatus(String orderId, OrderStatus newStatus) {
+  Future<void> updateOrderStatus(String orderId, OrderStatus newStatus) async {
     final index = _orders.indexWhere((order) => order.id == orderId);
     if (index >= 0) {
       final order = _orders[index];
@@ -155,10 +160,23 @@ class OrderProvider extends ChangeNotifier {
         statusTimestamps: updatedTimestamps,
       );
 
-            notifyListeners();
-            _updateOrderInFirestore(_orders[index]);
-          }
-        }
+      notifyListeners();
+      _updateOrderInFirestore(_orders[index]);
+
+      // Tampilkan notifikasi berdasarkan status baru
+      switch (newStatus) {
+        case OrderStatus.diproses:
+          await _notificationService.showOrderProcessingNotification(orderId: orderId);
+          break;
+        case OrderStatus.dikirim:
+          await _notificationService.showOrderShippedNotification(orderId: orderId);
+          break;
+        case OrderStatus.diterima:
+          await _notificationService.showOrderDeliveredNotification(orderId: orderId);
+          break;
+      }
+    }
+  }
       
         // Dapatkan pesanan berdasarkan status
         List<Order> getOrdersByStatus(OrderStatus status) {

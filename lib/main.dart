@@ -6,12 +6,19 @@ import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 import 'shared/providers/cart_provider.dart';
 import 'shared/providers/order_provider.dart';
+import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Notification Service
+  await NotificationService().initialize();
+
   runApp(const MyApp());
 }
 

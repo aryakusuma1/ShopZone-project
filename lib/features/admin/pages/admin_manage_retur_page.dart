@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../shared/models/complaint.dart';
+import '../../../core/services/notification_service.dart';
 
 // Enum untuk status retur/complaint
 enum ReturStatus {
@@ -115,6 +116,7 @@ class _ReturCard extends StatefulWidget {
 class _ReturCardState extends State<_ReturCard> {
   bool _isUpdating = false;
   String? _userEmail;
+  final NotificationService _notificationService = NotificationService();
 
   @override
   void initState() {
@@ -188,6 +190,23 @@ class _ReturCardState extends State<_ReturCard> {
           .update({
         'status': newComplaintStatus,
       });
+
+      // Send notification to user based on new status
+      switch (newStatus) {
+        case ReturStatus.diproses:
+          await _notificationService.showComplaintProcessingNotification(
+            orderId: widget.complaint.orderId,
+          );
+          break;
+        case ReturStatus.selesai:
+          await _notificationService.showComplaintResolvedNotification(
+            orderId: widget.complaint.orderId,
+          );
+          break;
+        case ReturStatus.ajukan:
+          // No notification needed for reverting to pending
+          break;
+      }
 
       if (!mounted) return;
 

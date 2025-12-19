@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../shared/models/order.dart';
 import '../../../shared/models/complaint.dart';
 
@@ -30,6 +31,7 @@ class _ComplaintPageState extends State<ComplaintPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final NotificationService _notificationService = NotificationService();
 
   String? _selectedIssueType;
   XFile? _selectedImage;
@@ -472,6 +474,13 @@ class _ComplaintPageState extends State<ComplaintPage> {
               );
 
           debugPrint('Complaint saved successfully!');
+
+          // Tampilkan notifikasi retur diajukan
+          await _notificationService.showComplaintSubmittedNotification(
+            orderId: widget.order.id,
+            issueType: _selectedIssueType!,
+          );
+
         } catch (firestoreError) {
           debugPrint('Firestore error: $firestoreError');
           // Throw with more specific error
