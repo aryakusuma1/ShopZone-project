@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:intl/intl.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../shared/models/order.dart';
 
 class AdminManageOrdersPage extends StatelessWidget {
@@ -156,6 +157,20 @@ class _OrderCardState extends State<_OrderCard> {
           (key, value) => MapEntry(key.index.toString(), value.toIso8601String()),
         ),
       });
+
+      // Kirim notifikasi ke user berdasarkan status baru
+      final notificationService = NotificationService();
+      switch (newStatus) {
+        case OrderStatus.diproses:
+          await notificationService.showOrderProcessingNotification(orderId: widget.order.id);
+          break;
+        case OrderStatus.dikirim:
+          await notificationService.showOrderShippedNotification(orderId: widget.order.id);
+          break;
+        case OrderStatus.diterima:
+          await notificationService.showOrderDeliveredNotification(orderId: widget.order.id);
+          break;
+      }
 
       if (!mounted) return;
 

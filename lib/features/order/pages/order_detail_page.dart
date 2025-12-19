@@ -8,6 +8,7 @@ import '../../../shared/models/complaint.dart';
 import '../../../shared/models/refund.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../routes/app_routes.dart';
 
 class OrderDetailPage extends StatelessWidget {
@@ -897,6 +898,12 @@ class _RefundConfirmationDialogState extends State<_RefundConfirmationDialog> {
           .collection('refunds')
           .doc(refundId)
           .set(refund.toJson());
+
+      // Tampilkan notifikasi refund diajukan
+      await NotificationService().showRefundRequestedNotification(
+        orderId: widget.order.id,
+        amount: widget.order.finalPrice,
+      );
 
       if (!mounted) return;
 
