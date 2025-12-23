@@ -27,7 +27,7 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 <table border="1" cellspacing="0" cellpadding="6">
     <tr>
-        <th colspan="5">Shopzone</th>
+        <th colspan="9">Shopzone</th>
     </tr>
     <tr>
         <th>Agile Organization</th>
@@ -35,6 +35,10 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
         <th>Home</th>
         <th>Search Product &amp; Result Search</th>
         <th>Detail Product</th>
+        <th>Cart, Order, Complain and Return Product</th>
+        <th>Admin</th>
+        <th>Refund Product</th>
+        <th>Testing</th>
     </tr>
     <tr>
         <td>Product Owner</td>
@@ -42,12 +46,20 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
         <td>Arya Kusuma</td>
         <td>Dimas Imam Ghifari</td>
         <td>Rama Prastaruna Wijaya</td>
+        <td>Rama Prastaruna Wijaya</td>
+        <td>Arya Kusuma</td>
+        <td>Arya Kusuma</td>
+        <td>Dimas Imam Ghifari</td>
     </tr>
     <tr>
         <td>Scrum Master</td>
         <td>Dimas Imam Ghifari</td>
         <td>Rama Prastaruna Wijaya</td>
         <td>Arya Kusuma</td>
+        <td>Arya Kusuma</td>
+        <td>Arya Kusuma</td>
+        <td>Rama Prastaruna Wijaya</td>
+        <td>Dimas Imam Ghifari</td>
         <td>Arya Kusuma</td>
     </tr>
     <tr>
@@ -56,6 +68,10 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
         <td>Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari</td>
         <td>Dimas Imam Ghifari</td>
         <td>Rama Prastaruna Wijaya</td>
+        <td>Rama Prastaruna Wijaya</td>
+        <td>Rama Prastaruna Wijaya, Arya Kusuma, Dimas Imam Ghifari</td>
+        <td>Arya Kusuma</td>
+        <td>Dimas Imam Ghifari</td>
     </tr>
 </table>
 
