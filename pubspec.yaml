@@ -70,6 +70,8 @@ dev_dependencies:
   # Testing mocks
   firebase_auth_mocks: ^0.14.1
   fake_cloud_firestore: ^3.0.3
+  firebase_core_platform_interface: ^5.3.2
+  plugin_platform_interface: ^2.1.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
