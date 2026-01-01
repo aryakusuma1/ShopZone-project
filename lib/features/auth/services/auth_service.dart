@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/services/analytics_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -36,6 +37,11 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // Track signup event
+      await AnalyticsService.logSignUp(method: 'email');
+      await AnalyticsService.setUserId(userCredential.user!.uid);
+      await AnalyticsService.setUserProperty(name: 'user_role', value: 'customer');
+
       return null; // Success, no error
     } on FirebaseAuthException catch (e) {
       // Return error message based on error code
@@ -62,10 +68,15 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Track login event
+      await AnalyticsService.logLogin(method: 'email');
+      await AnalyticsService.setUserId(userCredential.user!.uid);
+
       return null; // Success, no error
     } on FirebaseAuthException catch (e) {
       // Return error message based on error code
