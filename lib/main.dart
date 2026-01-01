@@ -7,6 +7,7 @@ import 'routes/route_generator.dart';
 import 'shared/providers/cart_provider.dart';
 import 'shared/providers/order_provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/analytics_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,9 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           fontFamily: 'Roboto',
         ),
+        navigatorObservers: [
+          AnalyticsService.observer,
+        ],
         initialRoute: AppRoutes.splash,
         onGenerateRoute: RouteGenerator.generateRoute,
       ),
