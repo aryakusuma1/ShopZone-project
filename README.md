@@ -19,6 +19,12 @@ Adalah aplikasi e-commerce yang dibangun menggunakan Flutter. Aplikasi ini meman
 
 [Low Fidelity Prototype](https://drive.google.com/drive/folders/19odoZT9K9fUrQcIna3BXW9BgcH2nT7ie)
 
+### Barcode install app ShopZone
+
+<p align="center">
+  <img src="assets/barcode-shopzone.jpeg" alt="Barcode ShopZone" width="300"/>
+</p>
+
 ---
 
 
